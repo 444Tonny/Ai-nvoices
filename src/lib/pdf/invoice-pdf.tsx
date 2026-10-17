@@ -25,7 +25,7 @@ const s = StyleSheet.create({
   logo: { maxWidth: 140, maxHeight: 60, marginBottom: 10, objectFit: "contain" },
   company: { fontSize: 14, fontFamily: "Helvetica-Bold", marginBottom: 4 },
   muted: { color: MUTED },
-  title: { fontSize: 24, color: ACCENT, fontFamily: "Helvetica-Bold", textAlign: "right", marginBottom: 10 },
+  title: { fontSize: 24, lineHeight: 1, color: ACCENT, fontFamily: "Helvetica-Bold", textAlign: "right", marginBottom: 14 },
   metaRow: { flexDirection: "row", justifyContent: "flex-end", marginBottom: 2 },
   metaLabel: { color: MUTED, width: 90, textAlign: "right", marginRight: 8 },
   metaValue: { width: 90, textAlign: "right" },
