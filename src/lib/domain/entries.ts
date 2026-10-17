@@ -46,3 +46,10 @@ export async function addManualEntry(db: DB, input: ManualEntryInput): Promise<T
 export async function deleteEntries(db: DB, ids: string[]): Promise<void> {
   must(await db.from("time_entries").delete().in("id", ids));
 }
+
+/** Bornes des entrées qui se terminent après `fromIso` (ou en cours) : sert au total du jour. */
+export async function listEntryTimesSince(db: DB, fromIso: string): Promise<Pick<TimeEntry, "start_time" | "end_time">[]> {
+  return must(
+    await db.from("time_entries").select("start_time, end_time").or(`end_time.gt.${fromIso},end_time.is.null`),
+  );
+}
