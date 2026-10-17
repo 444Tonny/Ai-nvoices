@@ -298,3 +298,23 @@ export async function createInvoiceWithItems(
   }
   return invoice;
 }
+
+export interface InvoiceOption {
+  id: string;
+  number: string;
+  status: InvoiceStatus;
+  client_id: string | null;
+  client_name: string | null;
+  currency: string;
+}
+
+/** Liste légère pour les sélecteurs de facture (non payées en premier). */
+export async function listInvoiceOptions(db: DB): Promise<InvoiceOption[]> {
+  const rows = must(
+    await db.from("invoices").select("id, number, status, client_id, currency, client:clients(name)").order("created_at", { ascending: false }),
+  ) as unknown as (Omit<InvoiceOption, "client_name"> & { client: { name: string } | null })[];
+  const rank: Record<InvoiceStatus, number> = { unpaid: 0, sent: 1, paid: 2 };
+  return rows
+    .map(({ client, ...r }) => ({ ...r, client_name: client?.name ?? null }))
+    .sort((a, b) => rank[a.status] - rank[b.status]);
+}

@@ -16,7 +16,18 @@ export interface EntryListItem {
 }
 
 /** Liste d'entrées de temps avec suppression par ligne et suppression groupée. */
-export function EntryList({ entries, showTask = false, showDate = true }: { entries: EntryListItem[]; showTask?: boolean; showDate?: boolean }) {
+export function EntryList({
+  entries,
+  showTask = false,
+  showDate = true,
+  onChanged,
+}: {
+  entries: EntryListItem[];
+  showTask?: boolean;
+  showDate?: boolean;
+  /** Appelé après une suppression réussie (listes chargées côté client). */
+  onChanged?: () => void;
+}) {
   const { exec, pending } = useAction();
   const { confirm } = useFeedback();
   const { now, tz } = useTimer();
@@ -24,6 +35,7 @@ export function EntryList({ entries, showTask = false, showDate = true }: { entr
 
   const remove = async (ids: string[]) => {
     const res = await exec(() => deleteEntriesAction(ids), ids.length > 1 ? "Entrées supprimées" : "Entrée supprimée");
+    if (res.ok) onChanged?.();
     return res.ok;
   };
 
