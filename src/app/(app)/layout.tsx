@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getTimerState } from "@/lib/domain/timer";
 import { listRecentTasks } from "@/lib/domain/tasks";
 import { listEntryTimesSince } from "@/lib/domain/entries";
-import { TZ_COOKIE } from "@/lib/tz";
+import { TZ_COOKIE, getUserTimezone } from "@/lib/tz";
 import { FeedbackProvider } from "@/components/ui/feedback";
 import { TimerProvider } from "@/components/timer/timer-provider";
 import { TimerWidget } from "@/components/timer/timer-widget";
@@ -20,16 +20,17 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   // 36 h en arrière couvrent « aujourd'hui » quel que soit le fuseau du navigateur.
   const since = new Date(Date.now() - 36 * 3600 * 1000).toISOString();
-  const [timer, recentTasks, todayEntries, cookieStore] = await Promise.all([
+  const [timer, recentTasks, todayEntries, cookieStore, tz] = await Promise.all([
     getTimerState(supabase),
     listRecentTasks(supabase, 20),
     listEntryTimesSince(supabase, since),
     cookies(),
+    getUserTimezone(),
   ]);
 
   return (
     <FeedbackProvider>
-      <TimerProvider initialState={timer} recentTasks={recentTasks} todayEntries={todayEntries}>
+      <TimerProvider initialState={timer} recentTasks={recentTasks} todayEntries={todayEntries} tz={tz}>
         <TimezoneSync current={cookieStore.get(TZ_COOKIE)?.value ?? null} />
         <div className="flex min-h-screen">
           <Sidebar email={user.email ?? ""} />

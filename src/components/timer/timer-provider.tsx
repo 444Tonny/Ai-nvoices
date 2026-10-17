@@ -1,12 +1,13 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { TimerState } from "@/lib/types";
 import type { RecentTask } from "@/lib/domain/tasks";
 import { pauseTimerAction, resumeTimerAction, startTimerAction, stopTimerAction } from "@/actions/timer";
 import { useAction } from "@/components/ui/use-action";
 import { entrySeconds, formatHMS } from "@/lib/format";
+import { dayBounds } from "@/lib/tz-utils";
 
 export interface TodayEntry {
   start_time: string;
@@ -19,8 +20,10 @@ interface TimerContextValue {
   elapsed: number;
   /** Total du jour (heure locale) en secondes, mis à jour en direct. */
   todaySeconds: number;
-  /** Horodatage client courant (rafraîchi chaque seconde). */
+  /** Horodatage aligné sur l'horloge serveur (rafraîchi chaque seconde). */
   now: number;
+  /** Fuseau IANA de l'utilisateur. */
+  tz: string;
   recentTasks: RecentTask[];
   pending: boolean;
   start: (taskId: string) => Promise<void>;
@@ -34,21 +37,26 @@ interface TimerContextValue {
 const Ctx = createContext<TimerContextValue | null>(null);
 const CHANNEL = "tim-timer";
 
-/** Horloge partagée : un seul intervalle, rafraîchi chaque seconde. */
-function useNow() {
-  const [now, setNow] = useState(() => Date.now());
+/**
+ * Horloge partagée alignée sur l'heure serveur. Le premier rendu utilise
+ * exactement `serverNow` (identique côté serveur et navigateur, donc pas
+ * d'écart d'hydratation), puis un intervalle la fait avancer chaque seconde.
+ */
+function useServerClock(serverNow: string) {
+  const serverMs = Date.parse(serverNow);
+  const [now, setNow] = useState(serverMs);
   useEffect(() => {
-    const id = window.setInterval(() => setNow(Date.now()), 1000);
+    const skew = serverMs - Date.now();
+    setNow(Date.now() + skew);
+    const id = window.setInterval(() => setNow(Date.now() + skew), 1000);
     return () => window.clearInterval(id);
-  }, []);
+  }, [serverMs]);
   return now;
 }
 
-/** Somme des secondes des entrées comprises dans la journée locale de `now`. */
-function secondsToday(entries: TodayEntry[], now: number): number {
-  const today = new Date(now);
-  const dayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
-  const dayEnd = dayStart + 86_400_000;
+/** Somme des secondes des entrées comprises dans la journée de `now` (fuseau `tz`). */
+function secondsToday(entries: TodayEntry[], now: number, tz: string): number {
+  const [dayStart, dayEnd] = dayBounds(now, tz);
   let total = 0;
   for (const e of entries) {
     const s = Math.max(new Date(e.start_time).getTime(), dayStart);
@@ -62,20 +70,19 @@ export function TimerProvider({
   initialState,
   recentTasks,
   todayEntries,
+  tz,
   children,
 }: {
   initialState: TimerState;
+  tz: string;
   recentTasks: RecentTask[];
   todayEntries: TodayEntry[];
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const now = useNow();
+  const now = useServerClock(initialState.server_now);
   const { exec, pending } = useAction();
   const [switcherOpen, setSwitcherOpen] = useState(false);
-
-  // Décalage entre l'horloge serveur et l'horloge client, pour un affichage juste.
-  const skew = useMemo(() => new Date(initialState.server_now).getTime() - Date.now(), [initialState.server_now]);
   const state = initialState;
 
   // Synchronisation entre fenêtres (mini-timer, autres onglets) et au retour sur l'onglet.
@@ -117,11 +124,11 @@ export function TimerProvider({
     if (res.ok) after();
   }, [exec, after]);
 
-  const serverNow = now + skew;
+  const serverNow = now;
   const elapsed =
     state.accumulated_seconds +
     (state.status === "running" && state.entry_start ? entrySeconds(state.entry_start, null, serverNow) : 0);
-  const todaySeconds = secondsToday(todayEntries, serverNow);
+  const todaySeconds = secondsToday(todayEntries, serverNow, tz);
 
   // Raccourci clavier ⌘K / Ctrl+K pour la palette de tâches.
   useEffect(() => {
@@ -150,6 +157,7 @@ export function TimerProvider({
     elapsed,
     todaySeconds,
     now: serverNow,
+    tz,
     recentTasks,
     pending,
     start,

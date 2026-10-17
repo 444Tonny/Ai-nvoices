@@ -105,3 +105,13 @@ export async function deleteTasks(db: DB, ids: string[]): Promise<void> {
 export async function getTask(db: DB, id: string): Promise<Task | null> {
   return maybe(await db.from("tasks").select("*").eq("id", id).maybeSingle());
 }
+
+/** Options légères pour les sélecteurs de tâche (id, nom, projet). */
+export async function listTaskOptions(db: DB): Promise<{ id: string; name: string; project_name: string | null }[]> {
+  const rows = must(
+    await db.from("tasks").select("id, name, is_completed, project:projects(name)").order("name"),
+  ) as unknown as { id: string; name: string; is_completed: boolean; project: { name: string } | null }[];
+  return rows
+    .sort((a, b) => Number(a.is_completed) - Number(b.is_completed))
+    .map((t) => ({ id: t.id, name: t.name, project_name: t.project?.name ?? null }));
+}
