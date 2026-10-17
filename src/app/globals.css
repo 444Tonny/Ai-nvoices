@@ -1,0 +1,172 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------ */
+/* Design tokens TimeIsMoney : thème sombre unique, accents violets     */
+/* ------------------------------------------------------------------ */
+:root {
+  --page: #1c1c1c;
+  --surface-1: #242426;
+  --surface-2: #2b2b2e;
+  --surface-3: #333338;
+
+  --primary: #bc6ff1;
+  --primary-hover: #892cdc;
+  --secondary: #52057b;
+  --secondary-hover: #6b0fa0;
+
+  --danger: #ef4b67;
+  --danger-hover: #c93a54;
+  --success: #2ecc81;
+  --warning: #f5a623;
+  --info: #8368b8;
+  --accent: #a78bda;
+
+  --text: #ffffff;
+  --on-fill: #1c1c1c;
+  --muted: #a8a8ae;
+  --dim: #6b6b70;
+
+  --border: #3a3a3f;
+  --radius: 5px;
+
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-page: var(--page);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-secondary: var(--secondary);
+  --color-secondary-hover: var(--secondary-hover);
+  --color-danger: var(--danger);
+  --color-danger-hover: var(--danger-hover);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+  --color-accent: var(--accent);
+  --color-text: var(--text);
+  --color-on-fill: var(--on-fill);
+  --color-muted: var(--muted);
+  --color-dim: var(--dim);
+  --color-border: var(--border);
+  --radius-ui: var(--radius);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+html,
+body {
+  background: var(--page);
+  color: var(--text);
+  font-size: 14px;
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 { font-weight: 600; }
+
+::selection { background: var(--secondary); color: var(--text); }
+
+* { scrollbar-color: var(--surface-3) transparent; }
+
+/* ------------------------------------------------------------------ */
+/* Composants de base                                                   */
+/* ------------------------------------------------------------------ */
+@layer components {
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 38px;
+    padding: 10px 24px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+    line-height: 1;
+  }
+  .btn:hover:not(:disabled) { background: var(--surface-3); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+  .btn-primary { background: var(--primary); color: var(--on-fill); border: none; }
+  .btn-primary:hover:not(:disabled) { background: var(--primary-hover); color: var(--on-fill); }
+  .btn-danger { background: var(--danger); color: var(--on-fill); border: none; }
+  .btn-danger:hover:not(:disabled) { background: var(--danger-hover); color: var(--on-fill); }
+  .btn-success { background: var(--success); color: var(--on-fill); border: none; }
+  .btn-success:hover:not(:disabled) { filter: brightness(0.9); background: var(--success); }
+  .btn-warning { background: var(--warning); color: var(--on-fill); border: none; }
+  .btn-warning:hover:not(:disabled) { filter: brightness(0.9); background: var(--warning); }
+
+  .btn-sm { min-height: 32px; padding: 6px 12px; font-size: 12px; }
+  .btn-icon { min-height: 32px; padding: 6px 10px; font-size: 12px; }
+
+  .input,
+  .select,
+  .textarea {
+    width: 100%;
+    min-height: 38px;
+    padding: 10px 16px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.2;
+    transition: border-color 150ms ease;
+  }
+  .textarea { min-height: 80px; resize: vertical; }
+  .input::placeholder, .textarea::placeholder { color: var(--dim); }
+  .input:focus, .select:focus, .textarea:focus { outline: none; border-color: var(--primary); }
+  .select { appearance: none; padding-right: 36px; background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%); background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%; background-size: 5px 5px; background-repeat: no-repeat; }
+
+  .label { display: block; margin-bottom: 6px; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+
+  .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--radius); }
+
+  .checkbox { width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer; }
+
+  .link { color: var(--primary); cursor: pointer; background: none; border: none; padding: 0; text-align: left; }
+  .link:hover { text-decoration: underline; }
+
+  .table-wrap { width: 100%; overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface-1); }
+  .table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .table thead th {
+    background: var(--surface-2);
+    border-radius: 0;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  .table tbody td { height: 52px; padding: 8px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .table tbody tr:last-child td { border-bottom: none; }
+  .table tbody tr:hover { background: var(--surface-2); }
+  .table tbody tr.row-selected { background: color-mix(in srgb, var(--secondary) 45%, transparent); }
+  .table tbody tr.row-active { background: color-mix(in srgb, var(--success) 14%, transparent); box-shadow: inset 3px 0 0 var(--success); }
+
+  .truncate-cell { display: block; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: var(--radius); font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap; }
+
+  .duration { color: var(--accent); font-variant-numeric: tabular-nums; }
+  .tabular { font-variant-numeric: tabular-nums; }
+}
