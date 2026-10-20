@@ -2,7 +2,8 @@ import { supabaseKey, supabaseUrl } from "@/lib/env";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/auth"];
+// /api/mcp gère sa propre authentification (jeton personnel).
+const PUBLIC_PATHS = ["/login", "/auth", "/api/mcp"];
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });

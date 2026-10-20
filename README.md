@@ -12,7 +12,7 @@ Portage web d'une application de bureau existante, interface entièrement en fra
 - **Calendrier** mensuel avec total par jour, détail et saisie des entrées d'un jour.
 - **Clients, projets, tâches** : tables CRUD, sélection multiple, suppression groupée, pages détail.
 - **Facturation** : création manuelle, génération depuis une période, ajout groupé de tâches, synchronisation des heures pour les factures non payées, regroupement par projet, export PDF, profils émetteur avec logo.
-- **Prêt pour un serveur MCP** : voir [docs/MCP.md](docs/MCP.md).
+- **Serveur MCP** : Claude peut créer des tâches, saisir du temps et facturer pour vous. Voir [docs/MCP.md](docs/MCP.md).
 
 ## Déploiement
 
