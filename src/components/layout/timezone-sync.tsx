@@ -9,7 +9,7 @@ export function TimezoneSync({ current }: { current: string | null }) {
   useEffect(() => {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
     if (tz && tz !== current) {
-      document.cookie = `tim-tz=${encodeURIComponent(tz)}; path=/; max-age=31536000; samesite=lax`;
+      document.cookie = `ainv-tz=${encodeURIComponent(tz)}; path=/; max-age=31536000; samesite=lax`;
       router.refresh();
     }
   }, [current, router]);

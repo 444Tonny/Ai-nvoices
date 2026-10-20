@@ -1,5 +1,5 @@
 -- =====================================================================
--- TimeIsMoney : vues, fonctions du timer, statistiques, facturation
+-- AI-nvoices : vues, fonctions du timer, statistiques, facturation
 -- Toutes les vues et fonctions s'exécutent avec les droits de l'appelant
 -- (security invoker) : les policies RLS s'appliquent donc normalement.
 -- =====================================================================

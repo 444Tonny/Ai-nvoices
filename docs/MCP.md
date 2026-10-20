@@ -1,6 +1,6 @@
 # Préparation du serveur MCP
 
-TimeIsMoney est prêt à recevoir son propre serveur [MCP (Model Context Protocol)](https://modelcontextprotocol.io), qui permettra à un agent (Claude, etc.) de piloter le timer, consulter les heures et préparer des factures. **Le serveur n'est pas encore implémenté** : ce document décrit ce qui est en place et les étapes restantes.
+AI-nvoices est prêt à recevoir son propre serveur [MCP (Model Context Protocol)](https://modelcontextprotocol.io), qui permettra à un agent (Claude, etc.) de piloter le timer, consulter les heures et préparer des factures. **Le serveur n'est pas encore implémenté** : ce document décrit ce qui est en place et les étapes restantes.
 
 ## Ce qui est déjà en place
 

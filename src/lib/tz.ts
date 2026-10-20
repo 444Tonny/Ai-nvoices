@@ -1,7 +1,7 @@
 import "server-only";
 import { cookies } from "next/headers";
 
-export const TZ_COOKIE = "tim-tz";
+export const TZ_COOKIE = "ainv-tz";
 export const DEFAULT_TZ = "Europe/Paris";
 
 /** Fuseau IANA de l'utilisateur, transmis par le navigateur via un cookie. */

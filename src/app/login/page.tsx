@@ -12,7 +12,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-ui bg-primary text-xl font-semibold text-on-fill">
             ⏱
           </div>
-          <h1 className="text-[26px]">TimeIsMoney</h1>
+          <h1 className="text-[26px]">AI-nvoices</h1>
           <p className="mt-2 text-muted">Suivi du temps et facturation pour freelances</p>
         </div>
         <LoginForm initialError={error === "lien" ? "Lien invalide ou expiré. Demandez-en un nouveau." : undefined} />

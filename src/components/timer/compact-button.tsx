@@ -54,7 +54,7 @@ export function CompactButton() {
       try {
         const pip = await window.documentPictureInPicture.requestWindow({ width: 360, height: 130 });
         copyStyles(pip);
-        pip.document.title = "TimeIsMoney";
+        pip.document.title = "AI-nvoices";
         pip.addEventListener("pagehide", () => setPipWindow(null));
         setPipWindow(pip);
         return;
@@ -62,7 +62,7 @@ export function CompactButton() {
         // Repli sur la popup classique.
       }
     }
-    window.open("/mini-timer", "tim-mini-timer", "popup=yes,width=380,height=170");
+    window.open("/mini-timer", "ainv-mini-timer", "popup=yes,width=380,height=170");
   }, [pipWindow]);
 
   useEffect(() => () => pipWindow?.close(), [pipWindow]);

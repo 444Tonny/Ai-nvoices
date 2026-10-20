@@ -5,7 +5,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 
 export const metadata: Metadata = {
-  title: { default: "TimeIsMoney", template: "%s · TimeIsMoney" },
+  title: { default: "AI-nvoices", template: "%s · AI-nvoices" },
   description: "Time tracker et facturation pour freelances",
 };
 

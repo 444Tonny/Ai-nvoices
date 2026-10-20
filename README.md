@@ -1,4 +1,4 @@
-# TimeIsMoney
+# AI-nvoices
 
 Time tracker pour freelances avec facturation PDF, inspiré de Clockify.
 Portage web d'une application de bureau existante, interface entièrement en français.
@@ -70,7 +70,7 @@ Les connexions par email / mot de passe et par magic link sont activées par dé
 npm run seed
 ```
 
-Crée un compte confirmé (`demo@timeismoney.local` / `demo1234` par défaut) avec trois clients, cinq projets, onze tâches, six semaines d'entrées de temps et deux factures. Relancer la commande réinitialise les données de ce compte uniquement.
+Crée un compte confirmé (`demo@ai-nvoices.local` / `demo1234` par défaut) avec trois clients, cinq projets, onze tâches, six semaines d'entrées de temps et deux factures. Relancer la commande réinitialise les données de ce compte uniquement.
 
 ### 6. Lancement
 

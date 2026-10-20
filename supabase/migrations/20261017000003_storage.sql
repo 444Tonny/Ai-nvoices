@@ -1,5 +1,5 @@
 -- =====================================================================
--- TimeIsMoney : stockage des logos des profils émetteur
+-- AI-nvoices : stockage des logos des profils émetteur
 -- Bucket public en lecture (le PDF doit pouvoir charger le logo).
 -- PNG et JPEG uniquement : ce sont les formats lus par @react-pdf/renderer.
 -- Chaque utilisateur écrit uniquement dans son dossier « <user_id>/… ».

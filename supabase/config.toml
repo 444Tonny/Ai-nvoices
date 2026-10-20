@@ -1,5 +1,5 @@
 # Configuration minimale de la CLI Supabase (supabase start / db push).
-project_id = "timeismoney"
+project_id = "ai-nvoices"
 
 [auth]
 site_url = "http://localhost:3000"

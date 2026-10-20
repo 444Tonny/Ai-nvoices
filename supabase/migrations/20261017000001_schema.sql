@@ -1,5 +1,5 @@
 -- =====================================================================
--- TimeIsMoney : schéma principal
+-- AI-nvoices : schéma principal
 -- Toutes les tables portent id, user_id, created_at.
 -- user_id vaut auth.uid() par défaut : l'app n'a jamais à le fournir.
 -- Les clés étrangères sont composites (id, user_id) pour empêcher qu'un

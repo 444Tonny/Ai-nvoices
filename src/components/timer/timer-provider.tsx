@@ -35,7 +35,7 @@ interface TimerContextValue {
 }
 
 const Ctx = createContext<TimerContextValue | null>(null);
-const CHANNEL = "tim-timer";
+const CHANNEL = "ainv-timer";
 
 /**
  * Horloge partagée alignée sur l'heure serveur. Le premier rendu utilise

@@ -44,7 +44,7 @@ export function Sidebar({ email }: { email: string }) {
       >
         <Link href="/" className="flex items-center gap-3 px-2">
           <span className="flex h-9 w-9 items-center justify-center rounded-ui bg-primary text-on-fill">⏱</span>
-          <span className="text-[18px] font-semibold">TimeIsMoney</span>
+          <span className="text-[18px] font-semibold">AI-nvoices</span>
         </Link>
 
         <nav className="flex flex-col gap-1">

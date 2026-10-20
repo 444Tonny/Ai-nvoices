@@ -1,11 +1,11 @@
 /**
- * Seed de démonstration TimeIsMoney.
+ * Seed de démonstration AI-nvoices.
  *
  *   npm run seed
  *
  * Variables lues dans .env.local (ou .env) :
  *   NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
- *   SEED_USER_EMAIL (défaut demo@timeismoney.local), SEED_USER_PASSWORD (défaut demo1234)
+ *   SEED_USER_EMAIL (défaut demo@ai-nvoices.local), SEED_USER_PASSWORD (défaut demo1234)
  *
  * Crée (ou réutilise) un utilisateur de démo confirmé, efface SES données,
  * puis insère clients, projets, tâches, six semaines d'entrées de temps et deux factures.
@@ -19,7 +19,7 @@ config();
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const email = process.env.SEED_USER_EMAIL || "demo@timeismoney.local";
+const email = process.env.SEED_USER_EMAIL || "demo@ai-nvoices.local";
 const password = process.env.SEED_USER_PASSWORD || "demo1234";
 
 if (!url || !serviceKey) {
