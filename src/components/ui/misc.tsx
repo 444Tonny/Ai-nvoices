@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { InvoiceStatus } from "@/lib/types";
+import { INVOICE_STATUS } from "@/lib/labels";
 
 export function PageHeader({
   title,
@@ -51,14 +52,9 @@ export function NameLink({ href, text, max = 260 }: { href: string; text: string
   );
 }
 
-const STATUS_STYLE: Record<InvoiceStatus, { label: string; className: string }> = {
-  unpaid: { label: "Non payée", className: "bg-danger/15 text-danger" },
-  sent: { label: "Envoyée", className: "bg-warning/15 text-warning" },
-  paid: { label: "Payée", className: "bg-success/15 text-success" },
-};
 
 export function StatusBadge({ status }: { status: InvoiceStatus }) {
-  const s = STATUS_STYLE[status];
+  const s = INVOICE_STATUS[status];
   return <span className={`badge ${s.className}`}>{s.label}</span>;
 }
 

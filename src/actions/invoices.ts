@@ -1,33 +1,32 @@
 "use server";
 
-import { z } from "zod";
 import { parse, run } from "./_run";
 import {
+  addUnbilledInput,
   idSchema,
   idsSchema,
+  invoiceFromUnbilledInput,
   invoiceInput,
   invoiceItemInput,
   invoiceStatusSchema,
-  periodSchema,
   templateInput,
-  currencySchema,
 } from "@/lib/domain/schemas";
 import {
-  addInvoiceItems,
-  buildPeriodDraft,
+  addManualItems,
+  addTasksToInvoice,
+  addUnbilledToInvoice,
   createInvoice,
-  createInvoiceWithItems,
+  createInvoiceFromUnbilled,
   deleteInvoiceItems,
   deleteInvoices,
   setInvoiceStatus,
   updateInvoice,
   updateInvoiceItem,
-  type PeriodDraft,
 } from "@/lib/domain/invoices";
 import { createTemplate, deleteTemplates, updateTemplate } from "@/lib/domain/templates";
-import { requireUser } from "@/lib/supabase/server";
 import { DomainError } from "@/lib/domain/core";
-import type { ActionResult } from "@/lib/types";
+import { getUserTimezone } from "@/lib/tz";
+import { dateToZonedIso } from "@/lib/tz-utils";
 
 // --- Factures --------------------------------------------------------------
 export async function saveInvoiceAction(id: string | null, input: unknown) {
@@ -46,84 +45,41 @@ export async function deleteInvoicesAction(ids: string[]) {
   return run((db) => deleteInvoices(db, parse(idsSchema, ids)));
 }
 
-// --- Lignes ----------------------------------------------------------------
-const addItemsInput = z.object({
-  invoice_id: idSchema.nullable(),
-  client_id: idSchema.nullable().optional(),
-  currency: currencySchema.optional(),
-  items: z.array(invoiceItemInput).min(1, "Aucune ligne à ajouter"),
-});
-
-/** Ajoute des lignes à une facture existante, ou crée une nouvelle facture si `invoice_id` est null. */
-export async function addItemsToInvoiceAction(input: unknown) {
+// --- Facturation du temps --------------------------------------------------
+/** Une facture en un clic depuis le temps non facturé d'un client. */
+export async function createInvoiceFromUnbilledAction(input: unknown) {
   return run(async (db) => {
-    const data = parse(addItemsInput, input);
-    if (data.invoice_id) {
-      await addInvoiceItems(db, data.invoice_id, data.items);
-      return { invoice_id: data.invoice_id };
-    }
-    const inv = await createInvoiceWithItems(db, {
-      clientId: data.client_id ?? null,
-      currency: data.currency,
-      items: data.items,
+    const data = parse(invoiceFromUnbilledInput, input);
+    const tz = await getUserTimezone();
+    return createInvoiceFromUnbilled(db, data.client_id, {
+      from: data.from ? dateToZonedIso(data.from, tz) : null,
+      to: data.to ? dateToZonedIso(data.to, tz, 1) : null,
     });
-    return { invoice_id: inv.id };
   });
 }
 
+/** Ajoute le temps non facturé (de tâches précises, ou de tout le client) à une facture existante ou nouvelle. */
+export async function addUnbilledAction(input: unknown) {
+  return run(async (db) => {
+    const data = parse(addUnbilledInput, input);
+    if (data.task_ids?.length) return addTasksToInvoice(db, data.task_ids, data.invoice_id);
+    if (!data.invoice_id) throw new DomainError("Choisissez une facture ou des tâches.");
+    const entries = await addUnbilledToInvoice(db, data.invoice_id);
+    return { invoiceId: data.invoice_id, entries };
+  });
+}
+
+// --- Lignes ----------------------------------------------------------------
 export async function saveInvoiceItemAction(invoiceId: string, itemId: string | null, input: unknown) {
   return run(async (db) => {
     const data = parse(invoiceItemInput, input);
     if (itemId) await updateInvoiceItem(db, parse(idSchema, itemId), data);
-    else await addInvoiceItems(db, parse(idSchema, invoiceId), [data]);
+    else await addManualItems(db, parse(idSchema, invoiceId), [data]);
   });
 }
 
 export async function deleteInvoiceItemsAction(ids: string[]) {
   return run((db) => deleteInvoiceItems(db, parse(idsSchema, ids)));
-}
-
-// --- Génération depuis une période ------------------------------------------
-export async function buildPeriodDraftAction(clientId: string, period: string): Promise<ActionResult<PeriodDraft>> {
-  try {
-    const { supabase } = await requireUser();
-    return { ok: true, data: await buildPeriodDraft(supabase, parse(idSchema, clientId), parse(periodSchema, period)) };
-  } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Erreur inattendue" };
-  }
-}
-
-const draftInput = z.object({
-  client_id: idSchema,
-  lines: z
-    .array(
-      z.object({
-        task_id: idSchema,
-        description: z.string().max(1000),
-        hours: z.number().min(0),
-        unit_price: z.number().min(0),
-      }),
-    )
-    .min(1, "Le brouillon ne contient aucune ligne"),
-});
-
-export async function createInvoiceFromDraftAction(input: unknown) {
-  return run(async (db) => {
-    const data = parse(draftInput, input);
-    const inv = await createInvoiceWithItems(db, {
-      clientId: data.client_id,
-      items: data.lines.map((l) => ({
-        description: l.description,
-        quantity: l.hours,
-        unit_price: l.unit_price,
-        discount: 0,
-        task_id: l.task_id,
-        // Les heures de la période sont conservées telles quelles.
-        sync_hours: false,
-      })),
-    });
-    return { invoice_id: inv.id };
-  });
 }
 
 // --- Profils émetteur --------------------------------------------------------
@@ -143,3 +99,4 @@ export async function deleteTemplatesAction(ids: string[]) {
     await deleteTemplates(db, parsed);
   });
 }
+

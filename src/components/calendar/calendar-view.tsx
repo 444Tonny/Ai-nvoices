@@ -85,8 +85,7 @@ export function CalendarView({
     const [start, end] = dayRange;
     return entries
       .filter((e) => new Date(e.start_time).getTime() < end && (e.end_time ? new Date(e.end_time).getTime() : now) > start)
-      .sort((a, b) => b.start_time.localeCompare(a.start_time))
-      .map((e) => ({ ...e, task: e.task ? { id: e.task.id, name: e.task.name, project_name: e.task.project_name } : null }));
+      .sort((a, b) => b.start_time.localeCompare(a.start_time));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entries, dayRange?.[0], dayRange?.[1], now]);
 
@@ -191,7 +190,7 @@ export function CalendarView({
                 />
               </div>
             )}
-            <EntryList entries={dayEntries} showTask showDate={false} />
+            <EntryList entries={dayEntries} tasks={tasks} showTask showDate={false} />
           </div>
         )}
       </Modal>

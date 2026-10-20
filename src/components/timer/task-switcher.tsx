@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Modal } from "@/components/ui/modal";
+import { ColorDot } from "@/components/ui/pills";
 import { useTimer } from "./timer-provider";
 
 /** Palette type ⌘K : les 20 tâches les plus récentes, filtrables au clavier. */
@@ -82,7 +83,8 @@ export function TaskSwitcher() {
                     <span className="block truncate text-text" title={t.name}>
                       {t.name}
                     </span>
-                    <span className="block truncate text-[13px] text-muted">
+                    <span className="flex items-center gap-1.5 truncate text-[13px] text-muted">
+                      <ColorDot color={t.project_color} size={8} />
                       {[t.project_name, t.client_name].filter(Boolean).join(" · ") || "Sans projet"}
                     </span>
                   </span>

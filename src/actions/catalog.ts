@@ -1,17 +1,15 @@
 "use server";
 
-/**
- * Server Actions des clients, projets et tâches.
- * Fines enveloppes : validation Zod puis appel de la couche domaine.
- */
+/** Server Actions des clients, projets et tâches : validation Zod puis couche domaine. */
 import { parse, run } from "./_run";
-import { clientInput, idSchema, idsSchema, projectInput, taskInput } from "@/lib/domain/schemas";
+import { clientInput, idSchema, idsSchema, projectInput, taskInput, taskPatch, taskStatusSchema } from "@/lib/domain/schemas";
 import { createClient, deleteClients, updateClient } from "@/lib/domain/clients";
 import { createProject, deleteProjects, updateProject } from "@/lib/domain/projects";
-import { createTask, deleteTasks, setTaskCompleted, updateTask } from "@/lib/domain/tasks";
+import { createTask, deleteTasks, moveTask, updateTask } from "@/lib/domain/tasks";
 import { listEntriesForTask } from "@/lib/domain/entries";
 import { requireUser } from "@/lib/supabase/server";
-import type { ActionResult, TimeEntry } from "@/lib/types";
+import type { ActionResult, TimeEntryWithTask } from "@/lib/types";
+import { z } from "zod";
 
 // --- Clients ---------------------------------------------------------------
 export async function saveClientAction(id: string | null, input: unknown) {
@@ -35,29 +33,42 @@ export async function saveProjectAction(id: string | null, input: unknown) {
   });
 }
 
+export async function setProjectArchivedAction(id: string, archived: boolean) {
+  return run(async (db) => {
+    await updateProject(db, parse(idSchema, id), { archived: Boolean(archived) });
+  });
+}
+
 export async function deleteProjectsAction(ids: string[]) {
   return run((db) => deleteProjects(db, parse(idsSchema, ids)));
 }
 
 // --- Tâches ----------------------------------------------------------------
-export async function saveTaskAction(id: string | null, input: unknown) {
+export async function createTaskAction(input: unknown) {
   return run(async (db) => {
-    const data = parse(taskInput, input);
-    const t = id ? await updateTask(db, parse(idSchema, id), data) : await createTask(db, data);
+    const t = await createTask(db, parse(taskInput, input));
     return { id: t.id };
   });
 }
 
-export async function setTaskCompletedAction(id: string, isCompleted: boolean) {
-  return run((db) => setTaskCompleted(db, parse(idSchema, id), Boolean(isCompleted)));
+/** Modification d'un ou plusieurs champs (édition en ligne). */
+export async function updateTaskAction(id: string, patch: unknown) {
+  return run(async (db) => {
+    await updateTask(db, parse(idSchema, id), parse(taskPatch, patch));
+  });
+}
+
+/** Glisser-déposer du tableau : nouveau statut et nouvelle position. */
+export async function moveTaskAction(id: string, status: string, position: number) {
+  return run((db) => moveTask(db, parse(idSchema, id), parse(taskStatusSchema, status), parse(z.number(), position)));
 }
 
 export async function deleteTasksAction(ids: string[]) {
   return run((db) => deleteTasks(db, parse(idsSchema, ids)));
 }
 
-/** Lecture à la demande de l'historique d'une tâche (modale « Hist. »). */
-export async function getTaskEntriesAction(taskId: string): Promise<ActionResult<TimeEntry[]>> {
+/** Lecture à la demande de l'historique d'une tâche (panneau latéral). */
+export async function getTaskEntriesAction(taskId: string): Promise<ActionResult<TimeEntryWithTask[]>> {
   try {
     const { supabase } = await requireUser();
     return { ok: true, data: await listEntriesForTask(supabase, parse(idSchema, taskId)) };

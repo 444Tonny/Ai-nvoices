@@ -4,43 +4,59 @@ import { useEffect, useState } from "react";
 import { Modal } from "@/components/ui/modal";
 import { Field } from "@/components/ui/misc";
 import { useAction } from "@/components/ui/use-action";
-import { saveTaskAction } from "@/actions/catalog";
-import type { Task } from "@/lib/types";
+import { createTaskAction } from "@/actions/catalog";
+import { TASK_PRIORITIES, TASK_PRIORITY, TASK_STATUS, TASK_STATUSES } from "@/lib/labels";
+import type { TaskStatus } from "@/lib/types";
 
 export interface ProjectOption {
   id: string;
   name: string;
+  color: string;
   client_name: string | null;
 }
 
-export function TaskFormModal({
+/** Création complète d'une tâche (l'édition se fait en ligne sur la page de la tâche). */
+export function NewTaskModal({
   open,
   onClose,
-  task,
   projects,
   defaultProjectId,
+  defaultStatus = "todo",
 }: {
   open: boolean;
   onClose: () => void;
-  task?: Task | null;
   projects: ProjectOption[];
   defaultProjectId?: string | null;
+  defaultStatus?: TaskStatus;
 }) {
   const { exec, pending } = useAction();
-  const [form, setForm] = useState({ name: "", description: "", project_id: "", is_completed: false });
+  const empty = { name: "", description: "", project_id: "", status: defaultStatus as string, priority: "", due_date: "", estimate_hours: "" };
+  const [form, setForm] = useState(empty);
 
   useEffect(() => {
-    if (!open) return;
-    setForm(
-      task
-        ? { name: task.name, description: task.description ?? "", project_id: task.project_id ?? "", is_completed: task.is_completed }
-        : { name: "", description: "", project_id: defaultProjectId ?? "", is_completed: false },
-    );
-  }, [open, task, defaultProjectId]);
+    if (open) setForm({ ...empty, project_id: defaultProjectId ?? "", status: defaultStatus });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
+    setForm((f) => ({ ...f, [k]: e.target.value }));
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await exec(() => saveTaskAction(task?.id ?? null, form), task ? "Tâche mise à jour" : "Tâche créée");
+    const hours = Number(form.estimate_hours.replace(",", "."));
+    const res = await exec(
+      () =>
+        createTaskAction({
+          name: form.name,
+          description: form.description,
+          project_id: form.project_id,
+          status: form.status,
+          priority: form.priority || null,
+          due_date: form.due_date,
+          estimate_minutes: form.estimate_hours && Number.isFinite(hours) ? Math.round(hours * 60) : null,
+        }),
+      "Tâche créée",
+    );
     if (res.ok) onClose();
   };
 
@@ -48,42 +64,64 @@ export function TaskFormModal({
     <Modal
       open={open}
       onClose={onClose}
-      title={task ? "Modifier la tâche" : "Nouvelle tâche"}
+      title="Nouvelle tâche"
+      width={620}
       footer={
         <>
           <button type="button" className="btn" onClick={onClose}>
             Annuler
           </button>
-          <button type="submit" form="task-form" className="btn btn-primary" disabled={pending}>
-            Enregistrer
+          <button type="submit" form="new-task-form" className="btn btn-primary" disabled={pending}>
+            Créer la tâche
           </button>
         </>
       }
     >
-      <form id="task-form" onSubmit={submit} className="flex flex-col gap-4">
+      <form id="new-task-form" onSubmit={submit} className="flex flex-col gap-4">
         <Field label="Nom" htmlFor="t-name">
-          <input id="t-name" className="input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required data-autofocus />
+          <input id="t-name" className="input" value={form.name} onChange={set("name")} required data-autofocus placeholder="Ex. : Maquette de la page d'accueil" />
         </Field>
-        <Field label="Projet" htmlFor="t-project">
-          <select id="t-project" className="select" value={form.project_id} onChange={(e) => setForm({ ...form, project_id: e.target.value })}>
-            <option value="">— Sans projet —</option>
-            {projects.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-                {p.client_name ? ` · ${p.client_name}` : ""}
-              </option>
-            ))}
-          </select>
-        </Field>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field label="Projet" htmlFor="t-project">
+            <select id="t-project" className="select" value={form.project_id} onChange={set("project_id")}>
+              <option value="">— Sans projet —</option>
+              {projects.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                  {p.client_name ? ` · ${p.client_name}` : ""}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Statut" htmlFor="t-status">
+            <select id="t-status" className="select" value={form.status} onChange={set("status")}>
+              {TASK_STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {TASK_STATUS[s].label}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Priorité" htmlFor="t-priority">
+            <select id="t-priority" className="select" value={form.priority} onChange={set("priority")}>
+              <option value="">Aucune</option>
+              {TASK_PRIORITIES.map((p) => (
+                <option key={p} value={p}>
+                  {TASK_PRIORITY[p].label}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Échéance" htmlFor="t-due">
+            <input id="t-due" type="date" className="input" value={form.due_date} onChange={set("due_date")} />
+          </Field>
+          <Field label="Estimation (heures)" htmlFor="t-estimate">
+            <input id="t-estimate" className="input" inputMode="decimal" placeholder="Ex. : 2,5" value={form.estimate_hours} onChange={set("estimate_hours")} />
+          </Field>
+        </div>
         <Field label="Description" htmlFor="t-desc">
-          <textarea id="t-desc" className="textarea" rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+          <textarea id="t-desc" className="textarea" rows={4} value={form.description} onChange={set("description")} />
         </Field>
-        {task && (
-          <label className="flex cursor-pointer items-center gap-3">
-            <input type="checkbox" className="checkbox" checked={form.is_completed} onChange={(e) => setForm({ ...form, is_completed: e.target.checked })} />
-            <span>Tâche terminée</span>
-          </label>
-        )}
       </form>
     </Modal>
   );

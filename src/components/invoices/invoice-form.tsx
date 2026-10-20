@@ -5,11 +5,9 @@ import { useRouter } from "next/navigation";
 import { Modal } from "@/components/ui/modal";
 import { Field } from "@/components/ui/misc";
 import { useAction } from "@/components/ui/use-action";
-import { useFeedback } from "@/components/ui/feedback";
-import { deleteInvoiceItemsAction, saveInvoiceAction } from "@/actions/invoices";
-import { CURRENCIES, formatMoney, getSymbol } from "@/lib/currency";
-import { lineAmount } from "@/lib/numbers";
-import type { Client, Invoice, InvoiceItemWithProject, InvoiceTemplate } from "@/lib/types";
+import { saveInvoiceAction } from "@/actions/invoices";
+import { CURRENCIES, getSymbol } from "@/lib/currency";
+import type { Client, Invoice, InvoiceTemplate } from "@/lib/types";
 
 function todayIso(offsetDays = 0) {
   const d = new Date();
@@ -17,15 +15,11 @@ function todayIso(offsetDays = 0) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-/**
- * Création / édition d'une facture. La devise est pré-sélectionnée selon le client
- * mais reste modifiable. En édition, « TÂCHES DE LA FACTURE » permet de retirer des lignes.
- */
+/** En-tête d'une facture : client, profil émetteur, devise (pré-remplie selon le client), dates, notes. */
 export function InvoiceFormModal({
   open,
   onClose,
   invoice,
-  items = [],
   clients,
   templates,
   nextNumber,
@@ -33,14 +27,12 @@ export function InvoiceFormModal({
   open: boolean;
   onClose: () => void;
   invoice?: Invoice | null;
-  items?: InvoiceItemWithProject[];
   clients: Pick<Client, "id" | "name" | "currency">[];
   templates: Pick<InvoiceTemplate, "id" | "name">[];
   nextNumber: string;
 }) {
   const router = useRouter();
   const { exec, pending } = useAction();
-  const { confirm } = useFeedback();
   const [form, setForm] = useState({
     number: "",
     client_id: "",
@@ -96,13 +88,7 @@ export function InvoiceFormModal({
     const res = await exec(() => saveInvoiceAction(invoice?.id ?? null, form), invoice ? "Facture mise à jour" : "Facture créée");
     if (res.ok) {
       onClose();
-      if (!invoice && res.data?.id) router.push(`/invoices?selected=${res.data.id}`);
-    }
-  };
-
-  const removeItem = async (item: InvoiceItemWithProject) => {
-    if (await confirm(`Retirer « ${item.description || "cette ligne"} » de la facture ?`)) {
-      await exec(() => deleteInvoiceItemsAction([item.id]), "Ligne retirée");
+      if (!invoice && res.data?.id) router.push(`/invoices/${res.data.id}`);
     }
   };
 
@@ -173,39 +159,9 @@ export function InvoiceFormModal({
           <textarea id="i-notes" className="textarea" rows={3} value={form.notes} onChange={set("notes")} />
         </Field>
         <Field label="Texte de pied de page" htmlFor="i-footer">
-          <textarea id="i-footer" className="textarea" rows={2} value={form.footer_text} onChange={set("footer_text")} placeholder="Ex. : Paiement à 30 jours par virement." />
+          <textarea id="i-footer" className="textarea" rows={3} value={form.footer_text} onChange={set("footer_text")} placeholder="Ex. : coordonnées bancaires, conditions de paiement…" />
         </Field>
       </form>
-
-      {invoice && (
-        <section className="mt-8">
-          <h3 className="label mb-3">Tâches de la facture</h3>
-          {items.length === 0 ? (
-            <p className="text-muted">Aucune ligne.</p>
-          ) : (
-            <ul className="flex flex-col gap-2">
-              {items.map((item) => (
-                <li key={item.id} className="flex items-center justify-between gap-3 rounded-ui border border-border bg-surface-2 px-4 py-2.5">
-                  <span className="min-w-0">
-                    <span className="block truncate" title={item.description}>
-                      {item.description || "—"}
-                    </span>
-                    <span className="text-[12px] text-muted">
-                      {item.project_name ?? "Autres"} · {item.quantity.toLocaleString("fr-FR")} h
-                    </span>
-                  </span>
-                  <span className="flex shrink-0 items-center gap-3">
-                    <span className="tabular">{formatMoney(lineAmount(item.quantity, item.unit_price, item.discount), form.currency)}</span>
-                    <button type="button" className="btn btn-icon" onClick={() => removeItem(item)} disabled={pending} title="Retirer" aria-label="Retirer">
-                      ✕
-                    </button>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      )}
     </Modal>
   );
 }

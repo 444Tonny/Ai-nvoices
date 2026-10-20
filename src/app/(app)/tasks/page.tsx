@@ -4,7 +4,7 @@ import { listTaskRows } from "@/lib/domain/tasks";
 import { listProjects } from "@/lib/domain/projects";
 import { listInvoiceOptions } from "@/lib/domain/invoices";
 import { PageHeader } from "@/components/ui/misc";
-import { TasksTable } from "@/components/tasks/tasks-table";
+import { TasksView } from "@/components/tasks/tasks-view";
 
 export const metadata: Metadata = { title: "Tâches" };
 
@@ -12,12 +12,13 @@ export default async function TasksPage() {
   const supabase = await createClient();
   const [tasks, projects, invoices] = await Promise.all([listTaskRows(supabase), listProjects(supabase), listInvoiceOptions(supabase)]);
   const renderedAt = Date.now();
+  const open = tasks.filter((t) => t.status !== "done").length;
   return (
     <>
-      <PageHeader title="Tâches" subtitle={`${tasks.length} tâche${tasks.length > 1 ? "s" : ""}`} />
-      <TasksTable
+      <PageHeader title="Tâches" subtitle={`${open} tâche${open > 1 ? "s" : ""} ouverte${open > 1 ? "s" : ""} sur ${tasks.length}`} />
+      <TasksView
         tasks={tasks}
-        projects={projects.map((p) => ({ id: p.id, name: p.name, client_name: p.client?.name ?? null }))}
+        projects={projects.map((p) => ({ id: p.id, name: p.name, color: p.color, client_name: p.client?.name ?? null }))}
         invoices={invoices}
         renderedAt={renderedAt}
       />

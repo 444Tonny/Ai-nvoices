@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { getTaskRow } from "@/lib/domain/tasks";
+import { getTaskRow, listTaskOptions } from "@/lib/domain/tasks";
 import { listEntriesForTask } from "@/lib/domain/entries";
-import { PageHeader } from "@/components/ui/misc";
+import { listProjects } from "@/lib/domain/projects";
+import { listInvoiceOptions } from "@/lib/domain/invoices";
 import { BackButton } from "@/components/ui/back-button";
 import { TaskDetail } from "@/components/tasks/task-detail";
 
@@ -12,35 +12,25 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
   const supabase = await createClient();
   const task = await getTaskRow(supabase, id).catch(() => null);
   if (!task) notFound();
-  const entries = await listEntriesForTask(supabase, id);
+  const [entries, projects, invoices, taskOptions] = await Promise.all([
+    listEntriesForTask(supabase, id),
+    listProjects(supabase),
+    listInvoiceOptions(supabase),
+    listTaskOptions(supabase),
+  ]);
   const renderedAt = Date.now();
 
   return (
     <>
       <BackButton fallback="/tasks" />
-      <PageHeader
-        title={<span className="break-words">{task.name}</span>}
-        subtitle={
-          <>
-            {task.project ? (
-              <Link href={`/projects/${task.project.id}`} className="link">
-                {task.project.name}
-              </Link>
-            ) : (
-              "Sans projet"
-            )}
-            {task.client && (
-              <>
-                {" · "}
-                <Link href={`/clients/${task.client.id}`} className="link">
-                  {task.client.name}
-                </Link>
-              </>
-            )}
-          </>
-        }
+      <TaskDetail
+        task={task}
+        entries={entries}
+        projects={projects.map((p) => ({ id: p.id, name: p.name, color: p.color, client_name: p.client?.name ?? null }))}
+        invoices={invoices}
+        taskOptions={taskOptions}
+        renderedAt={renderedAt}
       />
-      <TaskDetail task={task} entries={entries} renderedAt={renderedAt} />
     </>
   );
 }

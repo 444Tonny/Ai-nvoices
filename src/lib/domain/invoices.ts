@@ -7,9 +7,9 @@ import type {
   InvoiceStatus,
   InvoiceTemplate,
 } from "@/lib/types";
-import { round2 } from "@/lib/numbers";
+import { lineAmount, round2 } from "@/lib/numbers";
 import { DomainError, must, maybe, type DB } from "./core";
-import type { InvoiceInput, InvoiceItemInput, Period } from "./schemas";
+import type { InvoiceInput, InvoiceItemInput } from "./schemas";
 
 // ---------------------------------------------------------------------------
 // Lecture
@@ -22,16 +22,7 @@ interface TotalsRow {
   item_count: number;
 }
 
-/**
- * Recalcule les heures des lignes liées à une tâche, pour les factures « unpaid »
- * uniquement (les factures « sent » et « paid » sont figées).
- */
-export async function syncInvoiceHours(db: DB, invoiceId?: string): Promise<number> {
-  return Number(must(await db.rpc("sync_invoice_hours", { p_invoice_id: invoiceId ?? null })) ?? 0);
-}
-
 export async function listInvoices(db: DB, opts: { status?: InvoiceStatus; clientId?: string } = {}): Promise<InvoiceRow[]> {
-  await syncInvoiceHours(db);
   let q = db
     .from("invoices")
     .select("*, client:clients(id, name)")
@@ -41,9 +32,7 @@ export async function listInvoices(db: DB, opts: { status?: InvoiceStatus; clien
   if (opts.clientId) q = q.eq("client_id", opts.clientId);
   const invoices = must(await q) as (Invoice & { client: InvoiceRow["client"] })[];
   if (invoices.length === 0) return [];
-  const totals = must(
-    await db.from("invoice_totals").select("*").in("invoice_id", invoices.map((i) => i.id)),
-  ) as TotalsRow[];
+  const totals = must(await db.from("invoice_totals").select("*").in("invoice_id", invoices.map((i) => i.id))) as TotalsRow[];
   const byId = new Map(totals.map((t) => [t.invoice_id, t]));
   return invoices.map((i) => {
     const t = byId.get(i.id);
@@ -61,18 +50,25 @@ export interface InvoiceDetail {
 }
 
 interface RawItem extends InvoiceItem {
-  task: { id: string; name: string; project: { id: string; name: string } | null } | null;
+  task: { id: string; name: string; project: { id: string; name: string; color: string } | null } | null;
 }
 
 export async function listInvoiceItems(db: DB, invoiceId: string): Promise<InvoiceItemWithProject[]> {
   const rows = must(
     await db
       .from("invoice_items")
-      .select("*, task:tasks(id, name, project:projects(id, name))")
+      .select("*, task:tasks(id, name, project:projects(id, name, color))")
       .eq("invoice_id", invoiceId)
       .order("position")
       .order("created_at"),
   ) as RawItem[];
+  if (rows.length === 0) return [];
+  const entries = must(
+    await db.from("time_entries").select("invoice_item_id").in("invoice_item_id", rows.map((r) => r.id)),
+  ) as { invoice_item_id: string }[];
+  const counts = new Map<string, number>();
+  for (const e of entries) counts.set(e.invoice_item_id, (counts.get(e.invoice_item_id) ?? 0) + 1);
+
   return rows.map(({ task, ...item }) => ({
     ...item,
     quantity: Number(item.quantity),
@@ -80,19 +76,22 @@ export async function listInvoiceItems(db: DB, invoiceId: string): Promise<Invoi
     discount: Number(item.discount),
     project_id: task?.project?.id ?? null,
     project_name: task?.project?.name ?? null,
+    project_color: task?.project?.color ?? null,
+    entry_count: counts.get(item.id) ?? 0,
   }));
 }
 
-/** Détail complet d'une facture. Synchronise les heures si elle est « unpaid ». */
+export async function getInvoice(db: DB, id: string): Promise<Invoice | null> {
+  return maybe(await db.from("invoices").select("*").eq("id", id).maybeSingle()) as Invoice | null;
+}
+
+/** Détail complet d'une facture : client, émetteur, lignes (avec projet) et totaux. */
 export async function getInvoiceDetail(db: DB, id: string): Promise<InvoiceDetail | null> {
-  const invoice = maybe(await db.from("invoices").select("*").eq("id", id).maybeSingle()) as Invoice | null;
+  const invoice = await getInvoice(db, id);
   if (!invoice) return null;
-  if (invoice.status === "unpaid") await syncInvoiceHours(db, id);
 
   const [client, template, items] = await Promise.all([
-    invoice.client_id
-      ? db.from("clients").select("*").eq("id", invoice.client_id).maybeSingle().then(maybe)
-      : Promise.resolve(null),
+    invoice.client_id ? db.from("clients").select("*").eq("id", invoice.client_id).maybeSingle().then(maybe) : Promise.resolve(null),
     invoice.template_id
       ? db.from("invoice_templates").select("*").eq("id", invoice.template_id).maybeSingle().then(maybe)
       : Promise.resolve(null),
@@ -100,203 +99,12 @@ export async function getInvoiceDetail(db: DB, id: string): Promise<InvoiceDetai
   ]);
 
   const subtotal = round2(items.reduce((s, i) => s + round2(i.quantity * i.unit_price), 0));
-  const total = round2(items.reduce((s, i) => s + round2(i.quantity * i.unit_price * (1 - i.discount / 100)), 0));
-  return {
-    invoice,
-    client: client as Client | null,
-    template: template as InvoiceTemplate | null,
-    items,
-    subtotal,
-    total,
-  };
+  const total = round2(items.reduce((s, i) => s + lineAmount(i.quantity, i.unit_price, i.discount), 0));
+  return { invoice, client: client as Client | null, template: template as InvoiceTemplate | null, items, subtotal, total };
 }
 
-/** Prochain numéro libre au format FAC-AAAA-NNN. */
-export async function nextInvoiceNumber(db: DB, date = new Date()): Promise<string> {
-  const prefix = `FAC-${date.getFullYear()}-`;
-  const rows = must(await db.from("invoices").select("number").like("number", `${prefix}%`)) as { number: string }[];
-  const max = rows.reduce((m, r) => {
-    const n = Number.parseInt(r.number.slice(prefix.length), 10);
-    return Number.isFinite(n) && n > m ? n : m;
-  }, 0);
-  return `${prefix}${String(max + 1).padStart(3, "0")}`;
-}
-
-/** IDs des tâches présentes dans au moins une facture (optionnellement hors d'une facture). */
-export async function listInvoicedTaskIds(db: DB, excludeInvoiceId?: string): Promise<Set<string>> {
-  let q = db.from("invoice_items").select("task_id, invoice_id").not("task_id", "is", null);
-  if (excludeInvoiceId) q = q.neq("invoice_id", excludeInvoiceId);
-  const rows = must(await q) as { task_id: string }[];
-  return new Set(rows.map((r) => r.task_id));
-}
-
-// ---------------------------------------------------------------------------
-// Écriture
-// ---------------------------------------------------------------------------
-
-export async function createInvoice(db: DB, input: InvoiceInput): Promise<Invoice> {
-  return must(await db.from("invoices").insert({ ...input, status: "unpaid" }).select().single());
-}
-
-export async function updateInvoice(db: DB, id: string, input: InvoiceInput): Promise<Invoice> {
-  return must(await db.from("invoices").update(input).eq("id", id).select().single());
-}
-
-export async function setInvoiceStatus(db: DB, ids: string[], status: InvoiceStatus): Promise<void> {
-  // Synchronise une dernière fois avant de figer une facture.
-  if (status !== "unpaid") for (const id of ids) await syncInvoiceHours(db, id);
-  must(await db.from("invoices").update({ status }).in("id", ids));
-}
-
-export async function deleteInvoices(db: DB, ids: string[]): Promise<void> {
-  must(await db.from("invoices").delete().in("id", ids));
-}
-
-export async function addInvoiceItems(db: DB, invoiceId: string, items: InvoiceItemInput[]): Promise<void> {
-  if (items.length === 0) return;
-  const last = maybe(
-    await db.from("invoice_items").select("position").eq("invoice_id", invoiceId).order("position", { ascending: false }).limit(1).maybeSingle(),
-  ) as { position: number } | null;
-  const start = (last?.position ?? -1) + 1;
-  must(
-    await db.from("invoice_items").insert(
-      items.map((item, i) => ({ ...item, invoice_id: invoiceId, position: start + i })),
-    ),
-  );
-}
-
-export async function updateInvoiceItem(db: DB, id: string, input: InvoiceItemInput): Promise<void> {
-  must(await db.from("invoice_items").update(input).eq("id", id));
-}
-
-export async function deleteInvoiceItems(db: DB, ids: string[]): Promise<void> {
-  must(await db.from("invoice_items").delete().in("id", ids));
-}
-
-// ---------------------------------------------------------------------------
-// Génération depuis une période
-// ---------------------------------------------------------------------------
-
-export interface DraftLine {
-  task_id: string;
-  task_name: string;
-  project_name: string | null;
-  hours: number;
-  unit_price: number;
-  already_invoiced: boolean;
-}
-
-export interface PeriodDraft {
-  client: Client;
-  from: string;
-  to: string;
-  lines: DraftLine[];
-}
-
-export function periodStart(period: Period, now = new Date()): Date {
-  const d = new Date(now);
-  if (period === "1m") d.setMonth(d.getMonth() - 1);
-  else d.setDate(d.getDate() - { "1w": 7, "2w": 14, "3w": 21 }[period]);
-  return d;
-}
-
-/**
- * Brouillon de facture : tâches du client ayant du temps sur la période,
- * heures découpées aux bornes × taux horaire du client.
- */
-export async function buildPeriodDraft(db: DB, clientId: string, period: Period): Promise<PeriodDraft> {
-  const client = maybe(await db.from("clients").select("*").eq("id", clientId).maybeSingle()) as Client | null;
-  if (!client) throw new DomainError("Client introuvable.");
-
-  const now = new Date();
-  const from = periodStart(period, now);
-  const fromIso = from.toISOString();
-  const toIso = now.toISOString();
-
-  const projects = must(await db.from("projects").select("id, name").eq("client_id", clientId)) as { id: string; name: string }[];
-  if (projects.length === 0) return { client, from: fromIso, to: toIso, lines: [] };
-  const projectName = new Map(projects.map((p) => [p.id, p.name]));
-
-  const tasks = must(
-    await db.from("tasks").select("id, name, project_id").in("project_id", projects.map((p) => p.id)),
-  ) as { id: string; name: string; project_id: string }[];
-  if (tasks.length === 0) return { client, from: fromIso, to: toIso, lines: [] };
-
-  const entries = must(
-    await db
-      .from("time_entries")
-      .select("task_id, start_time, end_time")
-      .in("task_id", tasks.map((t) => t.id))
-      .lt("start_time", toIso)
-      .or(`end_time.gt.${fromIso},end_time.is.null`),
-  ) as { task_id: string; start_time: string; end_time: string | null }[];
-
-  const seconds = new Map<string, number>();
-  for (const e of entries) {
-    const s = Math.max(new Date(e.start_time).getTime(), from.getTime());
-    const en = Math.min(e.end_time ? new Date(e.end_time).getTime() : now.getTime(), now.getTime());
-    if (en > s) seconds.set(e.task_id, (seconds.get(e.task_id) ?? 0) + (en - s) / 1000);
-  }
-
-  const invoiced = await listInvoicedTaskIds(db);
-  const lines = tasks
-    .filter((t) => (seconds.get(t.id) ?? 0) > 0)
-    .map((t) => ({
-      task_id: t.id,
-      task_name: t.name,
-      project_name: projectName.get(t.project_id) ?? null,
-      hours: round2((seconds.get(t.id) ?? 0) / 3600),
-      unit_price: Number(client.hourly_rate),
-      already_invoiced: invoiced.has(t.id),
-    }))
-    .filter((l) => l.hours > 0)
-    .sort((a, b) => (a.project_name ?? "").localeCompare(b.project_name ?? "") || a.task_name.localeCompare(b.task_name));
-
-  return { client, from: fromIso, to: toIso, lines };
-}
-
-/**
- * Crée une facture « unpaid » pour un client avec des lignes déjà calculées.
- * Le profil émetteur par défaut est le premier créé.
- */
-export async function createInvoiceWithItems(
-  db: DB,
-  opts: { clientId: string | null; currency?: string; templateId?: string | null; items: InvoiceItemInput[] },
-): Promise<Invoice> {
-  let currency = opts.currency;
-  if (!currency && opts.clientId) {
-    const c = maybe(await db.from("clients").select("currency").eq("id", opts.clientId).maybeSingle()) as { currency: string } | null;
-    currency = c?.currency;
-  }
-  let templateId = opts.templateId ?? null;
-  if (!templateId) {
-    const t = maybe(await db.from("invoice_templates").select("id").order("created_at").limit(1).maybeSingle()) as { id: string } | null;
-    templateId = t?.id ?? null;
-  }
-  const today = new Date();
-  const due = new Date(today);
-  due.setDate(due.getDate() + 30);
-  const iso = (d: Date) =>
-    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-
-  const invoice = await createInvoice(db, {
-    number: await nextInvoiceNumber(db, today),
-    client_id: opts.clientId,
-    template_id: templateId,
-    invoice_date: iso(today),
-    issue_date: iso(today),
-    due_date: iso(due),
-    currency: (currency ?? "EUR") as InvoiceInput["currency"],
-    notes: null,
-    footer_text: null,
-  });
-  try {
-    await addInvoiceItems(db, invoice.id, opts.items);
-  } catch (e) {
-    await deleteInvoices(db, [invoice.id]);
-    throw e;
-  }
-  return invoice;
+export async function nextInvoiceNumber(db: DB): Promise<string> {
+  return String(must(await db.rpc("next_invoice_number")));
 }
 
 export interface InvoiceOption {
@@ -308,13 +116,217 @@ export interface InvoiceOption {
   currency: string;
 }
 
-/** Liste légère pour les sélecteurs de facture (non payées en premier). */
-export async function listInvoiceOptions(db: DB): Promise<InvoiceOption[]> {
-  const rows = must(
-    await db.from("invoices").select("id, number, status, client_id, currency, client:clients(name)").order("created_at", { ascending: false }),
-  ) as unknown as (Omit<InvoiceOption, "client_name"> & { client: { name: string } | null })[];
-  const rank: Record<InvoiceStatus, number> = { unpaid: 0, sent: 1, paid: 2 };
-  return rows
-    .map(({ client, ...r }) => ({ ...r, client_name: client?.name ?? null }))
-    .sort((a, b) => rank[a.status] - rank[b.status]);
+/** Liste légère pour les sélecteurs (non payées uniquement par défaut : seules à pouvoir recevoir du temps). */
+export async function listInvoiceOptions(db: DB, opts: { onlyUnpaid?: boolean } = { onlyUnpaid: true }): Promise<InvoiceOption[]> {
+  let q = db.from("invoices").select("id, number, status, client_id, currency, client:clients(name)").order("created_at", { ascending: false });
+  if (opts.onlyUnpaid) q = q.eq("status", "unpaid");
+  const rows = must(await q) as unknown as (Omit<InvoiceOption, "client_name"> & { client: { name: string } | null })[];
+  return rows.map(({ client, ...r }) => ({ ...r, client_name: client?.name ?? null }));
+}
+
+// ---------------------------------------------------------------------------
+// Écriture
+// ---------------------------------------------------------------------------
+
+export async function createInvoice(db: DB, input: InvoiceInput): Promise<Invoice> {
+  return must(await db.from("invoices").insert({ ...input, status: "unpaid" }).select().single());
+}
+
+/** Facture vide avec les valeurs par défaut (numéro, profil, devise du client, échéance J+30). */
+export async function createDefaultInvoice(db: DB, clientId: string | null): Promise<string> {
+  return String(must(await db.rpc("invoice_create", { p_client_id: clientId })));
+}
+
+export async function updateInvoice(db: DB, id: string, input: InvoiceInput): Promise<Invoice> {
+  return must(await db.from("invoices").update(input).eq("id", id).select().single());
+}
+
+export async function setInvoiceStatus(db: DB, ids: string[], status: InvoiceStatus): Promise<void> {
+  must(await db.from("invoices").update({ status }).in("id", ids));
+}
+
+export async function deleteInvoices(db: DB, ids: string[]): Promise<void> {
+  must(await db.from("invoices").delete().in("id", ids));
+}
+
+/** Ajoute des lignes libres (forfait, frais…) à une facture. */
+export async function addManualItems(db: DB, invoiceId: string, items: InvoiceItemInput[]): Promise<void> {
+  if (items.length === 0) return;
+  const last = maybe(
+    await db.from("invoice_items").select("position").eq("invoice_id", invoiceId).order("position", { ascending: false }).limit(1).maybeSingle(),
+  ) as { position: number } | null;
+  const start = (last?.position ?? -1) + 1;
+  must(
+    await db
+      .from("invoice_items")
+      .insert(items.map((item, i) => ({ ...item, invoice_id: invoiceId, source: "manual", position: start + i }))),
+  );
+}
+
+/** Met à jour une ligne. La quantité d'une ligne de temps suit ses entrées : elle n'est pas modifiable. */
+export async function updateInvoiceItem(db: DB, id: string, input: InvoiceItemInput): Promise<void> {
+  const item = maybe(await db.from("invoice_items").select("source").eq("id", id).maybeSingle()) as { source: string } | null;
+  if (!item) throw new DomainError("Ligne introuvable.");
+  const patch: Partial<InvoiceItemInput> = { ...input };
+  if (item.source === "time") delete patch.quantity;
+  must(await db.from("invoice_items").update(patch).eq("id", id));
+}
+
+/** Supprime des lignes : le temps qu'elles facturaient redevient « à facturer ». */
+export async function deleteInvoiceItems(db: DB, ids: string[]): Promise<void> {
+  must(await db.from("invoice_items").delete().in("id", ids));
+}
+
+// ---------------------------------------------------------------------------
+// Facturation du temps (façon Clockify)
+// ---------------------------------------------------------------------------
+
+/** Rattache le temps non facturé à une facture non payée. Retourne le nombre d'entrées ajoutées. */
+export async function addUnbilledToInvoice(
+  db: DB,
+  invoiceId: string,
+  opts: { taskIds?: string[]; from?: string | null; to?: string | null } = {},
+): Promise<number> {
+  return Number(
+    must(
+      await db.rpc("invoice_add_unbilled", {
+        p_invoice_id: invoiceId,
+        p_task_ids: opts.taskIds?.length ? opts.taskIds : null,
+        p_from: opts.from ?? null,
+        p_to: opts.to ?? null,
+      }),
+    ) ?? 0,
+  );
+}
+
+/** Crée une facture pour un client à partir de son temps non facturé (période facultative). */
+export async function createInvoiceFromUnbilled(
+  db: DB,
+  clientId: string,
+  opts: { from?: string | null; to?: string | null } = {},
+): Promise<{ invoiceId: string; entries: number }> {
+  const invoiceId = await createDefaultInvoice(db, clientId);
+  const entries = await addUnbilledToInvoice(db, invoiceId, opts);
+  if (entries === 0) {
+    await deleteInvoices(db, [invoiceId]);
+    throw new DomainError("Aucun temps à facturer pour ce client sur cette période.");
+  }
+  return { invoiceId, entries };
+}
+
+/**
+ * Ajoute des tâches à une facture (leur temps non facturé).
+ * Sans facture cible : crée une facture pour le client commun des tâches.
+ */
+export async function addTasksToInvoice(
+  db: DB,
+  taskIds: string[],
+  invoiceId: string | null,
+): Promise<{ invoiceId: string; entries: number }> {
+  let target = invoiceId;
+  if (!target) {
+    const rows = must(await db.from("tasks").select("id, project:projects(client_id)").in("id", taskIds)) as unknown as {
+      project: { client_id: string | null } | null;
+    }[];
+    const clients = new Set(rows.map((r) => r.project?.client_id ?? null));
+    target = await createDefaultInvoice(db, clients.size === 1 ? [...clients][0] : null);
+  }
+  const entries = await addUnbilledToInvoice(db, target, { taskIds });
+  if (entries === 0 && !invoiceId) {
+    await deleteInvoices(db, [target]);
+    throw new DomainError("Ces tâches n'ont pas de temps à facturer.");
+  }
+  return { invoiceId: target, entries };
+}
+
+export interface UnbilledTask {
+  task_id: string;
+  task_name: string;
+  seconds: number;
+  amount: number;
+  entries: number;
+}
+
+export interface UnbilledProject {
+  project_id: string | null;
+  project_name: string | null;
+  project_color: string | null;
+  seconds: number;
+  amount: number;
+  tasks: UnbilledTask[];
+}
+
+export interface UnbilledClient {
+  client_id: string | null;
+  client_name: string | null;
+  currency: string;
+  seconds: number;
+  amount: number;
+  first_entry: string;
+  last_entry: string;
+  projects: UnbilledProject[];
+}
+
+interface UnbilledRow {
+  task_id: string;
+  task_name: string;
+  project_id: string | null;
+  project_name: string | null;
+  project_color: string | null;
+  client_id: string | null;
+  client_name: string | null;
+  currency: string;
+  rate: number;
+  start_time: string;
+  seconds: number;
+}
+
+/** Temps à facturer regroupé par client puis projet puis tâche (période facultative, bornes ISO). */
+export async function listUnbilled(db: DB, opts: { clientId?: string; from?: string | null; to?: string | null } = {}): Promise<UnbilledClient[]> {
+  let q = db.from("unbilled_entries").select("*").order("start_time");
+  if (opts.clientId) q = q.eq("client_id", opts.clientId);
+  if (opts.from) q = q.gte("start_time", opts.from);
+  if (opts.to) q = q.lt("start_time", opts.to);
+  const rows = must(await q) as UnbilledRow[];
+
+  const clients = new Map<string, UnbilledClient>();
+  for (const r of rows) {
+    const secs = Number(r.seconds);
+    const amount = (secs / 3600) * Number(r.rate);
+    const ck = r.client_id ?? "none";
+    let c = clients.get(ck);
+    if (!c) {
+      c = { client_id: r.client_id, client_name: r.client_name, currency: r.currency, seconds: 0, amount: 0, first_entry: r.start_time, last_entry: r.start_time, projects: [] };
+      clients.set(ck, c);
+    }
+    c.seconds += secs;
+    c.amount += amount;
+    if (r.start_time < c.first_entry) c.first_entry = r.start_time;
+    if (r.start_time > c.last_entry) c.last_entry = r.start_time;
+
+    let p = c.projects.find((x) => x.project_id === r.project_id);
+    if (!p) {
+      p = { project_id: r.project_id, project_name: r.project_name, project_color: r.project_color, seconds: 0, amount: 0, tasks: [] };
+      c.projects.push(p);
+    }
+    p.seconds += secs;
+    p.amount += amount;
+
+    let t = p.tasks.find((x) => x.task_id === r.task_id);
+    if (!t) {
+      t = { task_id: r.task_id, task_name: r.task_name, seconds: 0, amount: 0, entries: 0 };
+      p.tasks.push(t);
+    }
+    t.seconds += secs;
+    t.amount += amount;
+    t.entries += 1;
+  }
+
+  return [...clients.values()]
+    .map((c) => ({
+      ...c,
+      amount: round2(c.amount),
+      projects: c.projects.map((p) => ({ ...p, amount: round2(p.amount), tasks: p.tasks.map((t) => ({ ...t, amount: round2(t.amount) })) })),
+    }))
+    .sort((a, b) => b.amount - a.amount);
 }

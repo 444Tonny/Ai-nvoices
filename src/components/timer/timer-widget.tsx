@@ -1,6 +1,7 @@
 "use client";
 
 import { formatHMS } from "@/lib/format";
+import { ColorDot } from "@/components/ui/pills";
 import { useTimer } from "./timer-provider";
 import { CompactButton } from "./compact-button";
 import { TaskSwitcher } from "./task-switcher";
@@ -26,7 +27,8 @@ export function TimerWidget() {
           <p className="truncate text-[13px] leading-tight" title={state.task?.name ?? ""}>
             {state.task?.name ?? "Aucun timer actif"}
           </p>
-          <p className="truncate text-[11px] leading-tight text-muted">
+          <p className="flex items-center gap-1.5 truncate text-[11px] leading-tight text-muted">
+            {state.task?.project_color && <ColorDot color={state.task.project_color} size={7} />}
             {state.task
               ? [state.task.project_name, state.task.client_name].filter(Boolean).join(" · ") || "Sans projet"
               : "Ctrl/⌘ + K pour démarrer"}

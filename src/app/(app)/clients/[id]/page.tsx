@@ -2,14 +2,14 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getClient, listClients } from "@/lib/domain/clients";
-import { listProjects } from "@/lib/domain/projects";
-import { listTaskRows } from "@/lib/domain/tasks";
-import { listInvoices } from "@/lib/domain/invoices";
-import { formatHoursMinutes, formatDay } from "@/lib/format";
+import { listProjectSummaries } from "@/lib/domain/projects";
+import { listInvoices, listUnbilled } from "@/lib/domain/invoices";
+import { formatDay, formatHoursMinutes } from "@/lib/format";
 import { formatMoney, formatRate } from "@/lib/currency";
 import { PageHeader, StatCard, StatusBadge } from "@/components/ui/misc";
 import { BackButton } from "@/components/ui/back-button";
-import { ProjectsTable } from "@/components/projects/projects-table";
+import { ProjectCards } from "@/components/projects/project-cards";
+import { InvoiceUnbilledButton } from "@/components/invoices/invoice-unbilled-button";
 
 export default async function ClientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -17,16 +17,16 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
   const client = await getClient(supabase, id).catch(() => null);
   if (!client) notFound();
 
-  const [projects, tasks, invoices, clients] = await Promise.all([
-    listProjects(supabase, { clientId: id }),
-    listTaskRows(supabase, { clientId: id }),
+  const [projects, invoices, unbilledList, clients] = await Promise.all([
+    listProjectSummaries(supabase, { clientId: id, includeArchived: true }),
     listInvoices(supabase, { clientId: id }),
+    listUnbilled(supabase, { clientId: id }),
     listClients(supabase),
   ]);
-  const totalSeconds = tasks.reduce((s, t) => s + t.total_seconds, 0);
+  const unbilled = unbilledList[0] ?? null;
+  const totalSeconds = projects.reduce((s, p) => s + p.total_seconds, 0);
   const sameCurrency = invoices.filter((i) => i.currency === client.currency);
-  const invoiced = sameCurrency.reduce((s, i) => s + i.total, 0);
-  const unpaid = sameCurrency.filter((i) => i.status !== "paid").reduce((s, i) => s + i.total, 0);
+  const outstanding = sameCurrency.filter((i) => i.status !== "paid").reduce((s, i) => s + i.total, 0);
 
   return (
     <>
@@ -34,13 +34,14 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
       <PageHeader
         title={<span className="break-words">{client.name}</span>}
         subtitle={[client.email, client.phone].filter(Boolean).join(" · ") || "Client"}
+        actions={unbilled ? <InvoiceUnbilledButton clientId={client.id} label={`Facturer ${formatMoney(unbilled.amount, unbilled.currency)}`} /> : undefined}
       />
 
-      <section className="mb-9 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Temps total" value={formatHoursMinutes(totalSeconds)} hint={`${tasks.length} tâche${tasks.length > 1 ? "s" : ""}`} />
-        <StatCard label="Taux horaire" value={formatRate(client.hourly_rate, client.currency)} hint={client.currency} />
-        <StatCard label="Facturé" value={formatMoney(invoiced, client.currency)} hint={`${invoices.length} facture${invoices.length > 1 ? "s" : ""}`} />
-        <StatCard label="Reste à encaisser" value={formatMoney(unpaid, client.currency)} hint="Factures non payées et envoyées" />
+      <section className="mb-9 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Temps total" value={formatHoursMinutes(totalSeconds)} hint={`${projects.length} projet${projects.length > 1 ? "s" : ""}`} />
+        <StatCard label="Taux horaire" value={formatRate(client.hourly_rate, client.currency)} hint="Par défaut pour ses projets" />
+        <StatCard label="À facturer" value={formatMoney(unbilled?.amount ?? 0, client.currency)} hint={formatHoursMinutes(unbilled?.seconds ?? 0)} />
+        <StatCard label="En attente de paiement" value={formatMoney(outstanding, client.currency)} hint="Factures non payées et envoyées" />
       </section>
 
       {client.address && (
@@ -51,7 +52,11 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
       )}
 
       <h2 className="mb-4 text-[20px]">Projets</h2>
-      <ProjectsTable projects={projects} clients={clients.map((c) => ({ id: c.id, name: c.name }))} defaultClientId={id} hideClientColumn />
+      <ProjectCards
+        projects={projects}
+        clients={clients.map((c) => ({ id: c.id, name: c.name, hourly_rate: c.hourly_rate, currency: c.currency }))}
+        defaultClientId={id}
+      />
 
       <h2 className="mb-4 mt-10 text-[20px]">Factures</h2>
       {invoices.length === 0 ? (
@@ -71,7 +76,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
               {invoices.map((i) => (
                 <tr key={i.id}>
                   <td>
-                    <Link href={`/invoices?selected=${i.id}`} className="link">
+                    <Link href={`/invoices/${i.id}`} className="link">
                       {i.number}
                     </Link>
                   </td>

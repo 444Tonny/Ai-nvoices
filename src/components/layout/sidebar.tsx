@@ -7,13 +7,14 @@ import { signOut } from "@/actions/auth";
 import { TodayTotal } from "@/components/timer/timer-widget";
 
 const NAV = [
-  { href: "/", label: "Dashboard", icon: "◧" },
+  { href: "/", label: "Accueil", icon: "◧" },
+  { href: "/time", label: "Suivi du temps", icon: "⏱" },
+  { href: "/tasks", label: "Tâches", icon: "☰" },
+  { href: "/projects", label: "Projets", icon: "▤" },
   { href: "/calendar", label: "Calendrier", icon: "📅" },
   { href: "/clients", label: "Clients", icon: "◉" },
-  { href: "/projects", label: "Projets", icon: "▤" },
-  { href: "/tasks", label: "Tâches", icon: "☰" },
-  { href: "/invoices", label: "Factures", icon: "🧾" },
-  { href: "/settings", label: "Profils émetteur", icon: "⚙" },
+  { href: "/invoices", label: "Facturation", icon: "🧾" },
+  { href: "/settings", label: "Paramètres", icon: "⚙" },
 ];
 
 function isActive(pathname: string, href: string) {

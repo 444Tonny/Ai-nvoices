@@ -76,3 +76,9 @@ export function dayBounds(ms: number, tz: string): [number, number] {
   const p = zonedParts(ms, tz);
   return [zonedMidnight(p.year, p.month, p.day, tz), zonedMidnight(p.year, p.month, p.day + 1, tz)];
 }
+
+/** « YYYY-MM-DD » (+ décalage en jours) → instant ISO du minuit correspondant dans le fuseau. */
+export function dateToZonedIso(date: string, tz: string, addDays = 0): string {
+  const [y, m, d] = date.split("-").map(Number);
+  return new Date(zonedMidnight(y, m - 1, d + addDays, tz)).toISOString();
+}

@@ -60,7 +60,7 @@ async function main() {
   console.log(`→ Utilisateur de démo : ${email} (${uid})`);
 
   // Nettoyage des données de cet utilisateur uniquement.
-  for (const table of ["invoice_items", "invoices", "user_timer_state", "time_entries", "tasks", "projects", "clients"]) {
+  for (const table of ["invoices", "invoice_items", "user_timer_state", "time_entries", "tasks", "projects", "clients"]) {
     check(await db.from(table).delete().eq("user_id", uid), `nettoyage ${table}`);
   }
 
@@ -101,34 +101,47 @@ async function main() {
     await db
       .from("projects")
       .insert([
-        { user_id: uid, name: "Site vitrine", description: "Refonte du site corporate", client_id: acme.id },
-        { user_id: uid, name: "Application mobile", description: "App React Native", client_id: acme.id },
-        { user_id: uid, name: "Dashboard analytics", client_id: globex.id },
-        { user_id: uid, name: "E-commerce", client_id: fanorona.id },
-        { user_id: uid, name: "Interne", description: "Administratif, veille", client_id: null },
+        { user_id: uid, name: "Site vitrine", description: "Refonte du site corporate", client_id: acme.id, color: "#BC6FF1" },
+        { user_id: uid, name: "Application mobile", description: "App React Native", client_id: acme.id, color: "#2ECC81", hourly_rate: 75 },
+        { user_id: uid, name: "Dashboard analytics", client_id: globex.id, color: "#F5A623" },
+        { user_id: uid, name: "E-commerce", client_id: fanorona.id, color: "#A78BDA" },
+        { user_id: uid, name: "Interne", description: "Administratif, veille", client_id: null, color: "#8368B8", billable: false },
       ])
       .select("id, name"),
     "projets",
   );
   const byName = Object.fromEntries(projects.map((p) => [p.name, p.id]));
 
+  const inDays = (n) => new Date(Date.now() + n * 86400_000).toISOString().slice(0, 10);
+  // [nom, projet, statut, priorité, échéance (jours), estimation (minutes)]
   const taskDefs = [
-    ["Maquettes Figma", "Site vitrine"],
-    ["Intégration HTML/CSS", "Site vitrine"],
-    ["SEO technique", "Site vitrine"],
-    ["Écran de connexion", "Application mobile"],
-    ["Notifications push", "Application mobile"],
-    ["Modélisation des données", "Dashboard analytics"],
-    ["Graphiques temps réel", "Dashboard analytics"],
-    ["Catalogue produits", "E-commerce"],
-    ["Paiement mobile money", "E-commerce"],
-    ["Comptabilité", "Interne"],
-    ["Veille technique", null],
+    ["Maquettes Figma", "Site vitrine", "done", "high", null, 720],
+    ["Intégration HTML/CSS", "Site vitrine", "in_progress", "high", 5, 960],
+    ["SEO technique", "Site vitrine", "todo", "normal", 14, 240],
+    ["Écran de connexion", "Application mobile", "review", "urgent", 1, 480],
+    ["Notifications push", "Application mobile", "todo", "normal", 21, 360],
+    ["Modélisation des données", "Dashboard analytics", "in_progress", "high", 3, 600],
+    ["Graphiques temps réel", "Dashboard analytics", "todo", "normal", null, null],
+    ["Catalogue produits", "E-commerce", "in_progress", "normal", 10, 720],
+    ["Paiement mobile money", "E-commerce", "todo", "urgent", -2, 480],
+    ["Comptabilité", "Interne", "todo", "low", null, null],
+    ["Veille technique", null, "todo", null, null, null],
   ];
   const tasks = check(
     await db
       .from("tasks")
-      .insert(taskDefs.map(([name, project]) => ({ user_id: uid, name, project_id: project ? byName[project] : null, is_completed: name === "SEO technique" })))
+      .insert(
+        taskDefs.map(([name, project, status, priority, due, estimate], i) => ({
+          user_id: uid,
+          name,
+          project_id: project ? byName[project] : null,
+          status,
+          priority,
+          due_date: due === null ? null : inDays(due),
+          estimate_minutes: estimate,
+          position: i + 1,
+        })),
+      )
       .select("id, name"),
     "tâches",
   );
@@ -136,6 +149,7 @@ async function main() {
   // Six semaines d'entrées, jours ouvrés, 2 à 4 sessions par jour entre 9h et 18h (UTC).
   const entries = [];
   const today = new Date();
+  const notes = ["Revue avec le client", "Corrections", "Recherche", null, null, null];
   for (let d = 42; d >= 1; d--) {
     const day = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - d));
     const dow = day.getUTCDay();
@@ -146,15 +160,20 @@ async function main() {
       const duration = 45 + Math.floor(rand() * 150);
       const start = new Date(day.getTime() + cursor * 60_000);
       const end = new Date(start.getTime() + duration * 60_000);
-      entries.push({ user_id: uid, task_id: pick(tasks).id, start_time: start.toISOString(), end_time: end.toISOString() });
+      entries.push({ user_id: uid, task_id: pick(tasks).id, start_time: start.toISOString(), end_time: end.toISOString(), description: pick(notes) });
       cursor += duration + 15 + Math.floor(rand() * 45);
     }
   }
-  // Une session déjà close ce matin.
-  entries.push({ user_id: uid, task_id: tasks[1].id, start_time: new Date(Date.now() - 3 * 3600_000).toISOString(), end_time: new Date(Date.now() - 2 * 3600_000).toISOString() });
+  entries.push({
+    user_id: uid,
+    task_id: tasks[1].id,
+    start_time: new Date(Date.now() - 3 * 3600_000).toISOString(),
+    end_time: new Date(Date.now() - 2 * 3600_000).toISOString(),
+    description: "Header responsive",
+  });
   check(await db.from("time_entries").insert(entries), "entrées de temps");
 
-  // Deux factures : une payée (figée), une non payée (heures synchronisées).
+  // Deux factures : une payée (temps verrouillé), une non payée (temps rattaché, heures automatiques).
   const year = today.getUTCFullYear();
   const iso = (dt) => dt.toISOString().slice(0, 10);
   const invoices = check(
@@ -162,9 +181,9 @@ async function main() {
       .from("invoices")
       .insert([
         {
-          user_id: uid, number: `FAC-${year}-001`, client_id: acme.id, template_id: templateId, status: "paid", currency: "EUR",
-          invoice_date: iso(new Date(Date.now() - 30 * 86400_000)), issue_date: iso(new Date(Date.now() - 30 * 86400_000)),
-          due_date: iso(new Date(Date.now() - 0 * 86400_000)), footer_text: "Paiement à 30 jours par virement.",
+          user_id: uid, number: `FAC-${year}-001`, client_id: acme.id, template_id: templateId, status: "unpaid", currency: "EUR",
+          invoice_date: iso(new Date(Date.now() - 21 * 86400_000)), issue_date: iso(new Date(Date.now() - 21 * 86400_000)),
+          due_date: iso(new Date(Date.now() + 9 * 86400_000)), footer_text: "Paiement à 30 jours par virement.",
         },
         {
           user_id: uid, number: `FAC-${year}-002`, client_id: acme.id, template_id: templateId, status: "unpaid", currency: "EUR",
@@ -176,16 +195,30 @@ async function main() {
     "factures",
   );
   const taskId = (name) => tasks.find((t) => t.name === name).id;
-  check(
-    await db.from("invoice_items").insert([
-      { user_id: uid, invoice_id: invoices[0].id, description: "Maquettes Figma", quantity: 12, unit_price: 65, discount: 0, task_id: taskId("Maquettes Figma"), sync_hours: false, position: 0 },
-      { user_id: uid, invoice_id: invoices[0].id, description: "Cadrage", quantity: 2, unit_price: 65, discount: 100, position: 1 },
-      { user_id: uid, invoice_id: invoices[1].id, description: "Intégration HTML/CSS", quantity: 0, unit_price: 65, discount: 0, task_id: taskId("Intégration HTML/CSS"), position: 0 },
-      { user_id: uid, invoice_id: invoices[1].id, description: "Écran de connexion", quantity: 0, unit_price: 65, discount: 10, task_id: taskId("Écran de connexion"), position: 1 },
-      { user_id: uid, invoice_id: invoices[1].id, description: "Hébergement (forfait)", quantity: 1, unit_price: 120, discount: 0, position: 2 },
-    ]),
+  const items = check(
+    await db
+      .from("invoice_items")
+      .insert([
+        { user_id: uid, invoice_id: invoices[0].id, description: "Maquettes Figma", quantity: 0, unit_price: 65, task_id: taskId("Maquettes Figma"), source: "time", position: 0 },
+        { user_id: uid, invoice_id: invoices[0].id, description: "Cadrage (offert)", quantity: 2, unit_price: 65, discount: 100, source: "manual", position: 1 },
+        { user_id: uid, invoice_id: invoices[1].id, description: "Écran de connexion", quantity: 0, unit_price: 75, discount: 10, task_id: taskId("Écran de connexion"), source: "time", position: 0 },
+        { user_id: uid, invoice_id: invoices[1].id, description: "Hébergement (forfait)", quantity: 1, unit_price: 120, source: "manual", position: 1 },
+      ])
+      .select("id, description"),
     "lignes de facture",
   );
+  const itemId = (d) => items.find((i) => i.description === d).id;
+  // Rattache le temps aux lignes : les triggers recalculent les quantités.
+  const cutoff = new Date(Date.now() - 21 * 86400_000).toISOString();
+  check(
+    await db.from("time_entries").update({ invoice_item_id: itemId("Maquettes Figma") }).eq("user_id", uid).eq("task_id", taskId("Maquettes Figma")).lt("start_time", cutoff),
+    "temps de la facture 1",
+  );
+  check(
+    await db.from("time_entries").update({ invoice_item_id: itemId("Écran de connexion") }).eq("user_id", uid).eq("task_id", taskId("Écran de connexion")),
+    "temps de la facture 2",
+  );
+  check(await db.from("invoices").update({ status: "paid" }).eq("id", invoices[0].id), "facture payée");
 
   console.log(`✓ Seed terminé : ${clients.length} clients, ${projects.length} projets, ${tasks.length} tâches, ${entries.length} entrées, ${invoices.length} factures.`);
   console.log(`  Connectez-vous avec ${email} / ${password}`);
