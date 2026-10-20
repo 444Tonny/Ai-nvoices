@@ -7,6 +7,8 @@ import { getUserTimezone } from "@/lib/tz";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+// Génération PDF : laisse de la marge au démarrage à froid de la fonction serverless.
+export const maxDuration = 30;
 
 /** Télécharge le logo du profil émetteur (PNG/JPEG, 2 Mo max). Un échec n'empêche pas le PDF. */
 async function loadLogo(url: string | null | undefined): Promise<PdfLogo | null> {

@@ -4,3 +4,5 @@ project_id = "ai-nvoices"
 [auth]
 site_url = "http://localhost:3000"
 additional_redirect_urls = ["http://localhost:3000/auth/callback"]
+# En production, Site URL et Redirect URLs se configurent dans le tableau de bord
+# Supabase (Authentication > URL Configuration) : voir docs/DEPLOIEMENT.md.

@@ -10,8 +10,15 @@ export interface AuthState {
   message?: string;
 }
 
+/**
+ * URL de base pour les liens envoyés par email.
+ * - Déploiements de prévisualisation Vercel : hôte de la requête (chaque preview a sa propre URL).
+ * - Sinon : NEXT_PUBLIC_SITE_URL, puis le domaine de production Vercel, puis l'hôte de la requête.
+ */
 async function siteUrl() {
-  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "");
+  const isPreview = process.env.VERCEL_ENV === "preview";
+  if (!isPreview && process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "");
+  if (!isPreview && process.env.VERCEL_PROJECT_PRODUCTION_URL) return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
   const h = await headers();
   const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
   const proto = h.get("x-forwarded-proto") ?? "http";

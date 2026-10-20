@@ -1,3 +1,4 @@
+import { supabaseKey, supabaseUrl } from "@/lib/env";
 import { createClient } from "@supabase/supabase-js";
 
 /**
@@ -9,7 +10,7 @@ import { createClient } from "@supabase/supabase-js";
  * comme dans l'app web. Aucune clé service_role n'est utilisée.
  */
 export function createClientWithAccessToken(accessToken: string) {
-  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+  return createClient(supabaseUrl(), supabaseKey(), {
     global: { headers: { Authorization: `Bearer ${accessToken}` } },
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   });

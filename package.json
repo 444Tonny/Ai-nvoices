@@ -6,9 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "seed": "node scripts/seed.mjs"
+    "seed": "node scripts/seed.mjs",
+    "db:push": "npx --yes supabase db push"
   },
   "dependencies": {
     "@react-pdf/renderer": "^4.9.0",
@@ -29,5 +29,8 @@
     "postcss": "^8.5.30",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }

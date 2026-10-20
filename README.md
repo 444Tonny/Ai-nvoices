@@ -14,6 +14,10 @@ Portage web d'une application de bureau existante, interface entièrement en fra
 - **Facturation** : création manuelle, génération depuis une période, ajout groupé de tâches, synchronisation des heures pour les factures non payées, regroupement par projet, export PDF, profils émetteur avec logo.
 - **Prêt pour un serveur MCP** : voir [docs/MCP.md](docs/MCP.md).
 
+## Déploiement
+
+L'app est prête pour **Vercel + Supabase**. Le pas-à-pas complet est dans [docs/DEPLOIEMENT.md](docs/DEPLOIEMENT.md) : projet Supabase, migrations, variables Vercel, URLs d'authentification et emails en production.
+
 ## Prérequis
 
 - Node.js 20 ou plus récent
@@ -38,7 +42,7 @@ cp .env.example .env.local
 | Variable | Usage |
 | --- | --- |
 | `NEXT_PUBLIC_SUPABASE_URL` | URL du projet Supabase |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Clé publique `anon` |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Clé publique `anon` (ou `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` avec une clé `sb_publishable_…`) |
 | `NEXT_PUBLIC_SITE_URL` | URL publique de l'app, utilisée pour les liens magiques (`http://localhost:3000` en local) |
 | `SUPABASE_SERVICE_ROLE_KEY` | **Seed uniquement.** Ne jamais l'exposer côté client ni la déployer avec l'app |
 | `SEED_USER_EMAIL`, `SEED_USER_PASSWORD` | Identifiants du compte de démonstration créé par le seed |
@@ -50,7 +54,7 @@ Liez le dossier au projet distant puis appliquez les migrations de `supabase/mig
 ```bash
 npx supabase login
 npx supabase link --project-ref <votre-project-ref>
-npx supabase db push
+npm run db:push
 ```
 
 Les migrations créent les tables, les policies RLS, les index, les vues de totaux, les fonctions du timer et des statistiques, le trigger du profil émetteur par défaut et le bucket de stockage `logos`.
@@ -87,6 +91,7 @@ Ouvrez [http://localhost:3000](http://localhost:3000).
 | `npm run dev` | Serveur de développement |
 | `npm run build` puis `npm start` | Build et serveur de production |
 | `npm run typecheck` | Vérification TypeScript |
+| `npm run db:push` | Applique les migrations au projet Supabase lié |
 | `npm run seed` | Données de démonstration |
 
 ## Structure
