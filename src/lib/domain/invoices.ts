@@ -129,12 +129,25 @@ export async function listInvoiceOptions(db: DB, opts: { onlyUnpaid?: boolean } 
 // ---------------------------------------------------------------------------
 
 export async function createInvoice(db: DB, input: InvoiceInput): Promise<Invoice> {
-  return must(await db.from("invoices").insert({ ...input, status: "unpaid" }).select().single());
+  const invoice = must(await db.from("invoices").insert({ ...input, status: "unpaid" }).select().single()) as Invoice;
+  if (!invoice.footer_text) await applyTemplateFooter(db, invoice.id);
+  return invoice;
 }
 
 /** Facture vide avec les valeurs par défaut (numéro, profil, devise du client, échéance J+30). */
 export async function createDefaultInvoice(db: DB, clientId: string | null): Promise<string> {
-  return String(must(await db.rpc("invoice_create", { p_client_id: clientId })));
+  const id = String(must(await db.rpc("invoice_create", { p_client_id: clientId })));
+  await applyTemplateFooter(db, id);
+  return id;
+}
+
+/** Préremplit le pied de page d'une facture qui n'en a pas avec celui de son profil émetteur. */
+export async function applyTemplateFooter(db: DB, invoiceId: string): Promise<void> {
+  const inv = maybe(
+    await db.from("invoices").select("footer_text, template:invoice_templates(default_footer_text)").eq("id", invoiceId).maybeSingle(),
+  ) as unknown as { footer_text: string | null; template: { default_footer_text: string | null } | null } | null;
+  const footer = inv?.template?.default_footer_text;
+  if (inv && !inv.footer_text && footer) must(await db.from("invoices").update({ footer_text: footer }).eq("id", invoiceId));
 }
 
 export async function updateInvoice(db: DB, id: string, input: InvoiceInput): Promise<Invoice> {

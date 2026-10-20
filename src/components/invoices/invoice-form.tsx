@@ -28,7 +28,7 @@ export function InvoiceFormModal({
   onClose: () => void;
   invoice?: Invoice | null;
   clients: Pick<Client, "id" | "name" | "currency">[];
-  templates: Pick<InvoiceTemplate, "id" | "name">[];
+  templates: Pick<InvoiceTemplate, "id" | "name" | "default_footer_text">[];
   nextNumber: string;
 }) {
   const router = useRouter();
@@ -69,7 +69,7 @@ export function InvoiceFormModal({
             issue_date: todayIso(),
             due_date: todayIso(30),
             notes: "",
-            footer_text: "",
+            footer_text: templates[0]?.default_footer_text ?? "",
           },
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -77,6 +77,16 @@ export function InvoiceFormModal({
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  /** Changer de profil remplace le pied de page s'il est vide ou encore celui du profil précédent. */
+  const onTemplateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const next = templates.find((t) => t.id === e.target.value);
+    setForm((f) => {
+      const previous = templates.find((t) => t.id === f.template_id)?.default_footer_text ?? "";
+      const untouched = f.footer_text.trim() === "" || f.footer_text === previous;
+      return { ...f, template_id: e.target.value, footer_text: untouched ? (next?.default_footer_text ?? "") : f.footer_text };
+    });
+  };
 
   const onClientChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const client = clients.find((c) => c.id === e.target.value);
@@ -125,7 +135,7 @@ export function InvoiceFormModal({
             </select>
           </Field>
           <Field label="Profil émetteur" htmlFor="i-template">
-            <select id="i-template" className="select" value={form.template_id} onChange={set("template_id")}>
+            <select id="i-template" className="select" value={form.template_id} onChange={onTemplateChange}>
               <option value="">— Aucun —</option>
               {templates.map((t) => (
                 <option key={t.id} value={t.id}>
@@ -159,7 +169,14 @@ export function InvoiceFormModal({
           <textarea id="i-notes" className="textarea" rows={3} value={form.notes} onChange={set("notes")} />
         </Field>
         <Field label="Texte de pied de page" htmlFor="i-footer">
-          <textarea id="i-footer" className="textarea" rows={3} value={form.footer_text} onChange={set("footer_text")} placeholder="Ex. : coordonnées bancaires, conditions de paiement…" />
+          <textarea
+            id="i-footer"
+            className="textarea"
+            rows={6}
+            value={form.footer_text}
+            onChange={set("footer_text")}
+            placeholder="Ex. : coordonnées bancaires, conditions de paiement… (défini par défaut dans le profil émetteur)"
+          />
         </Field>
       </form>
     </Modal>

@@ -3,7 +3,6 @@ import { renderToBuffer } from "@react-pdf/renderer";
 import { createClient } from "@/lib/supabase/server";
 import { getInvoiceDetail } from "@/lib/domain/invoices";
 import { InvoicePdf, type PdfLogo } from "@/lib/pdf/invoice-pdf";
-import { getUserTimezone } from "@/lib/tz";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -42,9 +41,8 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
   const detail = await getInvoiceDetail(supabase, id).catch(() => null);
   if (!detail) return NextResponse.json({ error: "Facture introuvable" }, { status: 404 });
 
-  const [logo, tz] = await Promise.all([loadLogo(detail.template?.logo_url), getUserTimezone()]);
-  const generatedAt = new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: tz });
-  const buffer = await renderToBuffer(<InvoicePdf detail={detail} logo={logo} generatedAt={generatedAt} />);
+  const logo = await loadLogo(detail.template?.logo_url);
+  const buffer = await renderToBuffer(<InvoicePdf detail={detail} logo={logo} />);
 
   const filename = `facture-${detail.invoice.number.replace(/[^\w.-]+/g, "_")}.pdf`;
   return new NextResponse(new Uint8Array(buffer), {

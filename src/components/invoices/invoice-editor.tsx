@@ -101,7 +101,7 @@ export function InvoiceEditor({
   /** Temps non facturé du client de la facture (factures non payées uniquement). */
   unbilled: UnbilledClient | null;
   clients: Pick<Client, "id" | "name" | "currency">[];
-  templates: Pick<InvoiceTemplate, "id" | "name">[];
+  templates: Pick<InvoiceTemplate, "id" | "name" | "default_footer_text">[];
   nextNumber: string;
 }) {
   const router = useRouter();

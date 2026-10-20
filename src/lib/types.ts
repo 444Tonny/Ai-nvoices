@@ -107,6 +107,8 @@ export interface InvoiceTemplate {
   bank_details: string | null;
   tax_number: string | null;
   logo_url: string | null;
+  /** Pied de page prérempli dans les nouvelles factures de ce profil. */
+  default_footer_text: string | null;
 }
 
 export interface Invoice {

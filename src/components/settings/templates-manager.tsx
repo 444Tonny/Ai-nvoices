@@ -28,9 +28,21 @@ type Form = {
   bank_details: string;
   tax_number: string;
   logo_url: string;
+  default_footer_text: string;
 };
 
-const empty: Form = { name: "", company_name: "", address: "", email: "", phone: "", website: "", bank_details: "", tax_number: "", logo_url: "" };
+const empty: Form = {
+  name: "",
+  company_name: "",
+  address: "",
+  email: "",
+  phone: "",
+  website: "",
+  bank_details: "",
+  tax_number: "",
+  logo_url: "",
+  default_footer_text: "",
+};
 
 function TemplateFormModal({ open, onClose, template, userId }: { open: boolean; onClose: () => void; template: InvoiceTemplate | null; userId: string }) {
   const { exec, pending } = useAction();
@@ -100,6 +112,16 @@ function TemplateFormModal({ open, onClose, template, userId }: { open: boolean;
         </Field>
         <Field label="Coordonnées bancaires" htmlFor="tp-bank">
           <textarea id="tp-bank" className="textarea" rows={3} value={form.bank_details} onChange={(e) => setForm({ ...form, bank_details: e.target.value })} placeholder="IBAN, BIC…" />
+        </Field>
+        <Field label="Pied de page par défaut des factures" htmlFor="tp-footer">
+          <textarea
+            id="tp-footer"
+            className="textarea"
+            rows={5}
+            value={form.default_footer_text}
+            onChange={(e) => setForm({ ...form, default_footer_text: e.target.value })}
+            placeholder="Ex. : conditions de paiement, coordonnées bancaires, contact… Prérempli dans chaque nouvelle facture de ce profil."
+          />
         </Field>
         <div>
           <span className="label">Logo (PNG ou JPEG, 2 Mo max.)</span>

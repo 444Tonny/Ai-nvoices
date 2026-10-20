@@ -26,7 +26,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
         detail={detail}
         unbilled={unbilled[0] ?? null}
         clients={clients.map((c) => ({ id: c.id, name: c.name, currency: c.currency }))}
-        templates={templates.map((t) => ({ id: t.id, name: t.name }))}
+        templates={templates.map((t) => ({ id: t.id, name: t.name, default_footer_text: t.default_footer_text }))}
         nextNumber={nextNumber}
       />
     </>

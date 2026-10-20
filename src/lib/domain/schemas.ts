@@ -144,6 +144,7 @@ export const templateInput = z.object({
   bank_details: optionalText.optional().default(null),
   tax_number: optionalText.optional().default(null),
   logo_url: optionalText.optional().default(null),
+  default_footer_text: optionalText.optional().default(null),
 });
 export type TemplateInput = z.infer<typeof templateInput>;
 

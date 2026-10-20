@@ -89,7 +89,7 @@ export default async function InvoicesPage({
         <InvoicesTable
           invoices={invoices}
           clients={clients.map((c) => ({ id: c.id, name: c.name, currency: c.currency }))}
-          templates={templates.map((t) => ({ id: t.id, name: t.name }))}
+          templates={templates.map((t) => ({ id: t.id, name: t.name, default_footer_text: t.default_footer_text }))}
           nextNumber={nextNumber}
           today={dateKeyInTz(Date.now(), tz)}
         />

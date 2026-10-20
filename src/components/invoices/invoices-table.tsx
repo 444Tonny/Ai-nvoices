@@ -29,7 +29,7 @@ export function InvoicesTable({
 }: {
   invoices: InvoiceRow[];
   clients: Pick<Client, "id" | "name" | "currency">[];
-  templates: Pick<InvoiceTemplate, "id" | "name">[];
+  templates: Pick<InvoiceTemplate, "id" | "name" | "default_footer_text">[];
   nextNumber: string;
   /** Date du jour (YYYY-MM-DD, fuseau de l'utilisateur) pour signaler les retards. */
   today: string;
