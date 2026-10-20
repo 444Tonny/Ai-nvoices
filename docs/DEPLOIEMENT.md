@@ -33,7 +33,7 @@ git push -u origin main
 ## 4. Créer le projet Vercel
 
 1. Sur [vercel.com/new](https://vercel.com/new), importez le dépôt. Le framework Next.js est détecté tout seul.
-2. **Région des fonctions** : `vercel.json` fixe `cdg1` (Paris). Si votre projet Supabase est ailleurs, remplacez-la par la région Vercel la plus proche, par exemple `fra1` pour Francfort ou `iad1` pour l'est des États-Unis. Chaque page fait plusieurs requêtes à la base : une région éloignée ralentit nettement l'app.
+2. **Région des fonctions** : `vercel.json` fixe `iad1` (Washington), la région la plus proche du projet Supabase actuel en `us-east-1`. Si votre projet Supabase est ailleurs, remplacez-la par la région Vercel la plus proche, par exemple `fra1` pour Francfort ou `iad1` pour l'est des États-Unis. Chaque page fait plusieurs requêtes à la base : une région éloignée ralentit nettement l'app.
 3. **Variables d'environnement**, au choix :
    - **Intégration Supabase** (le plus simple) : *Vercel › Integrations › Supabase*, puis liez le projet. Les variables `NEXT_PUBLIC_SUPABASE_URL` et la clé publique sont posées automatiquement.
    - **Manuellement**, dans *Project Settings › Environment Variables* :
