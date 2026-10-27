@@ -11,7 +11,7 @@ const TABS: { id: Mode; label: string }[] = [
   { id: "magic", label: "Magic link" },
 ];
 
-export function LoginForm({ initialError }: { initialError?: string }) {
+export function LoginForm({ initialError, next }: { initialError?: string; next?: string }) {
   const [mode, setMode] = useState<Mode>("password");
   const [pwState, pwAction, pwPending] = useActionState<AuthState, FormData>(signInWithPassword, { error: initialError });
   const [suState, suAction, suPending] = useActionState<AuthState, FormData>(signUp, {});
@@ -37,6 +37,7 @@ export function LoginForm({ initialError }: { initialError?: string }) {
       </div>
 
       <form action={action} className="space-y-5" key={mode}>
+        {next && <input type="hidden" name="next" value={next} />}
         <div>
           <label className="label" htmlFor="email">Email</label>
           <input id="email" name="email" type="email" required autoComplete="email" className="input" placeholder="vous@exemple.com" />

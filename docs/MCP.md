@@ -5,6 +5,20 @@ AI-nvoices expose un serveur [MCP (Model Context Protocol)](https://modelcontext
 - **Point d'accès :** `https://<votre-domaine>/api/mcp` (transport *Streamable HTTP*, sans état)
 - **Authentification :** `Authorization: Bearer ainv_…`, avec un jeton personnel créé dans **Paramètres › Accès MCP**
 
+## Connexion depuis claude.ai, Claude Desktop et mobile (OAuth)
+
+1. Sur claude.ai, ouvrez **Customize › Connectors**, puis **Add custom connector**.
+2. Indiquez l'URL `https://ai-nvoices.vercel.app/api/mcp`, sans identifiants OAuth : l'enregistrement est automatique.
+3. Cliquez sur **Connect**. La page de connexion d'AI-nvoices s'ouvre, puis l'écran « Autoriser … ? ».
+4. L'accès apparaît dans **Paramètres › Accès MCP** sous le nom « Connecteur · … ». Vous pouvez le révoquer à tout moment.
+
+Le serveur implémente OAuth 2.1 :
+
+- découverte via `/.well-known/oauth-protected-resource` et `/.well-known/oauth-authorization-server` ;
+- enregistrement dynamique des clients (RFC 7591), ou document de métadonnées du client ;
+- PKCE S256 obligatoire ;
+- jetons d'accès de 30 jours, renouvelables avec rotation.
+
 ## Connexion depuis Claude Code
 
 1. Dans l'app, ouvrez **Paramètres › Accès MCP** et créez un jeton. Il n'est affiché qu'une fois.

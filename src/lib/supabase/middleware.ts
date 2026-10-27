@@ -2,8 +2,13 @@ import { supabaseKey, supabaseUrl } from "@/lib/env";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-// /api/mcp gère sa propre authentification (jeton personnel).
-const PUBLIC_PATHS = ["/login", "/auth", "/api/mcp"];
+// /api/mcp et OAuth gèrent leur propre authentification (jetons, PKCE).
+const PUBLIC_PATHS = ["/login", "/auth", "/api/mcp", "/api/oauth", "/.well-known"];
+
+/** Chemin interne sûr pour revenir après connexion. */
+function safeNext(value: string | null): string | null {
+  return value && value.startsWith("/") && !value.startsWith("//") ? value : null;
+}
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -39,13 +44,22 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.search = "";
+    // Revenir ensuite à la page demandée (ex. consentement OAuth).
+    if (path !== "/") url.searchParams.set("next", path + request.nextUrl.search);
     return NextResponse.redirect(url);
   }
 
   if (user && path === "/login") {
+    const next = safeNext(request.nextUrl.searchParams.get("next"));
     const url = request.nextUrl.clone();
-    url.pathname = "/";
     url.search = "";
+    if (next) {
+      const target = new URL(next, request.url);
+      url.pathname = target.pathname;
+      url.search = target.search;
+    } else {
+      url.pathname = "/";
+    }
     return NextResponse.redirect(url);
   }
 

@@ -34,6 +34,17 @@ function translateAuthError(message: string): string {
   return message;
 }
 
+/** Page interne où revenir après connexion (champ caché « next »). */
+function nextPath(formData: FormData): string {
+  const v = String(formData.get("next") ?? "");
+  return v.startsWith("/") && !v.startsWith("//") ? v : "/";
+}
+
+const callbackUrl = async (formData: FormData) => {
+  const next = nextPath(formData);
+  return `${await siteUrl()}/auth/callback${next !== "/" ? `?next=${encodeURIComponent(next)}` : ""}`;
+};
+
 export async function signInWithPassword(_: AuthState, formData: FormData): Promise<AuthState> {
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
@@ -43,7 +54,7 @@ export async function signInWithPassword(_: AuthState, formData: FormData): Prom
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return { error: translateAuthError(error.message) };
   await ensureDefaultTemplate(supabase).catch(() => undefined);
-  redirect("/");
+  redirect(nextPath(formData));
 }
 
 export async function signUp(_: AuthState, formData: FormData): Promise<AuthState> {
@@ -55,12 +66,12 @@ export async function signUp(_: AuthState, formData: FormData): Promise<AuthStat
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { emailRedirectTo: `${await siteUrl()}/auth/callback` },
+    options: { emailRedirectTo: await callbackUrl(formData) },
   });
   if (error) return { error: translateAuthError(error.message) };
   if (data.session) {
     await ensureDefaultTemplate(supabase).catch(() => undefined);
-    redirect("/");
+    redirect(nextPath(formData));
   }
   return { message: "Compte créé. Confirmez votre adresse via le lien reçu par email." };
 }
@@ -72,7 +83,7 @@ export async function signInWithMagicLink(_: AuthState, formData: FormData): Pro
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithOtp({
     email,
-    options: { emailRedirectTo: `${await siteUrl()}/auth/callback` },
+    options: { emailRedirectTo: await callbackUrl(formData) },
   });
   if (error) return { error: translateAuthError(error.message) };
   return { message: "Lien de connexion envoyé. Consultez votre boîte mail." };
