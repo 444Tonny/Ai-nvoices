@@ -3,6 +3,9 @@
 import { Menu } from "./menu";
 import { TASK_PRIORITIES, TASK_PRIORITY, TASK_STATUS, TASK_STATUSES } from "@/lib/labels";
 import type { TaskPriority, TaskStatus } from "@/lib/types";
+import { faFlag } from "@fortawesome/free-solid-svg-icons";
+import { faFlag as faFlagOutline } from "@fortawesome/free-regular-svg-icons";
+import { Icon } from "@/components/ui/icon";
 
 export function ColorDot({ color, size = 10 }: { color: string | null | undefined; size?: number }) {
   return <span className="inline-block shrink-0 rounded-ui" style={{ width: size, height: size, background: color ?? "var(--dim)" }} aria-hidden />;
@@ -33,11 +36,11 @@ export function StatusSelect({ status, onChange, disabled }: { status: TaskStatu
 }
 
 export function PriorityFlag({ priority, showLabel = false }: { priority: TaskPriority | null; showLabel?: boolean }) {
-  if (!priority) return <span className="px-1.5 text-[13px] text-dim">{showLabel ? "Aucune" : "⚐"}</span>;
+  if (!priority) return <span className="px-1.5 text-[13px] text-dim">{showLabel ? "Aucune" : <Icon icon={faFlagOutline} />}</span>;
   const p = TASK_PRIORITY[priority];
   return (
     <span className="inline-flex items-center gap-1.5 whitespace-nowrap px-1.5 text-[13px]" style={{ color: p.color }} title={`Priorité ${p.label.toLowerCase()}`}>
-      {p.icon}
+      <Icon icon={faFlag} />
       {showLabel && <span>{p.label}</span>}
     </span>
   );

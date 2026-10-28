@@ -10,6 +10,8 @@ import { Modal } from "@/components/ui/modal";
 import { ColorDot } from "@/components/ui/pills";
 import { EntryList } from "@/components/entries/entry-list";
 import { ManualEntryForm, type TaskOption } from "@/components/entries/manual-entry-form";
+import { faChevronLeft, faChevronRight, faPause, faPlay, faPlus, faStop } from "@fortawesome/free-solid-svg-icons";
+import { Icon } from "@/components/ui/icon";
 import { formatHMS, formatHoursMinutes } from "@/lib/format";
 import { dateKeyInTz, zonedMidnight } from "@/lib/tz-utils";
 
@@ -66,15 +68,15 @@ function TimerBar({ tasks }: { tasks: TaskOption[] }) {
           <span className={`tabular ml-auto text-[22px] font-semibold ${running ? "text-success" : "text-warning"}`}>{formatHMS(elapsed)}</span>
           {running ? (
             <button type="button" className="btn btn-warning" onClick={pause} disabled={pending}>
-              ⏸ Pause
+              <Icon icon={faPause} /> Pause
             </button>
           ) : (
             <button type="button" className="btn btn-success" onClick={resume} disabled={pending}>
-              ▶ Reprendre
+              <Icon icon={faPlay} /> Reprendre
             </button>
           )}
           <button type="button" className="btn btn-danger" onClick={stop} disabled={pending}>
-            ■ Stop
+            <Icon icon={faStop} /> Stop
           </button>
         </>
       ) : (
@@ -93,7 +95,7 @@ function TimerBar({ tasks }: { tasks: TaskOption[] }) {
           </select>
           <span className="tabular text-[22px] font-semibold text-dim">00:00:00</span>
           <button type="button" className="btn btn-success" disabled={!taskId || pending} onClick={() => start(taskId)}>
-            ▶ Démarrer
+            <Icon icon={faPlay} /> Démarrer
           </button>
         </>
       )}
@@ -144,19 +146,19 @@ export function TimeTracker({ weekStart, entries, tasks }: { weekStart: Ymd; ent
 
       <div className="mb-5 flex flex-wrap items-center gap-3">
         <Link href={`/time?week=${prevWeek}`} className="btn btn-sm">
-          ‹ Semaine précédente
+          <Icon icon={faChevronLeft} /> Semaine précédente
         </Link>
         <Link href="/time" className="btn btn-sm">
           Cette semaine
         </Link>
         <Link href={`/time?week=${nextWeek}`} className="btn btn-sm">
-          Semaine suivante ›
+          Semaine suivante <Icon icon={faChevronRight} />
         </Link>
         <span className="ml-auto text-muted">
           Total de la semaine : <span className="duration text-[16px]">{formatHoursMinutes(weekTotal)}</span>
         </span>
         <button type="button" className="btn btn-primary btn-sm" onClick={() => setAdding(true)}>
-          + Saisie manuelle
+          <Icon icon={faPlus} /> Saisie manuelle
         </button>
       </div>
 

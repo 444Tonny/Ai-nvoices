@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { LoginForm } from "./login-form";
+import { faStopwatch } from "@fortawesome/free-solid-svg-icons";
+import { Icon } from "@/components/ui/icon";
 
 export const metadata: Metadata = { title: "Connexion" };
 
@@ -11,7 +13,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       <div className="w-full max-w-[420px]">
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-ui bg-primary text-xl font-semibold text-on-fill">
-            ⏱
+            <Icon icon={faStopwatch} />
           </div>
           <h1 className="text-[26px]">AI-nvoices</h1>
           <p className="mt-2 text-muted">Suivi du temps et facturation pour freelances</p>

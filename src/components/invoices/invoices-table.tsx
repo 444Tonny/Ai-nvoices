@@ -12,6 +12,8 @@ import { formatMoney } from "@/lib/currency";
 import { formatDay } from "@/lib/format";
 import { INVOICE_STATUS } from "@/lib/labels";
 import { InvoiceFormModal } from "./invoice-form";
+import { faChevronDown, faPlus } from "@fortawesome/free-solid-svg-icons";
+import { Icon } from "@/components/ui/icon";
 
 const FILTERS: { id: InvoiceStatus | "all"; label: string }[] = [
   { id: "all", label: "Toutes" },
@@ -58,7 +60,7 @@ export function InvoicesTable({
           </button>
         ))}
         <button type="button" className="btn ml-auto" onClick={() => setCreating(true)}>
-          + Facture vide
+          <Icon icon={faPlus} /> Facture vide
         </button>
       </div>
 
@@ -66,7 +68,7 @@ export function InvoicesTable({
         <div className="mb-4 flex flex-wrap items-center gap-3">
           <BulkBar selection={selection} onDelete={remove} noun="facture" disabled={pending}>
             <Menu<InvoiceStatus>
-              trigger={<span className={`btn btn-sm ${selection.count === 0 ? "pointer-events-none opacity-50" : ""}`}>Marquer comme ▾</span>}
+              trigger={<span className={`btn btn-sm ${selection.count === 0 ? "pointer-events-none opacity-50" : ""}`}>Marquer comme <Icon icon={faChevronDown} /></span>}
               disabled={selection.count === 0}
               items={(Object.keys(INVOICE_STATUS) as InvoiceStatus[]).map((s) => ({ value: s, label: INVOICE_STATUS[s].label }))}
               onSelect={bulkStatus}

@@ -5,6 +5,8 @@ import type { TaskRow } from "@/lib/types";
 import { useTimer } from "@/components/timer/timer-provider";
 import { ColorDot, StatusPill } from "@/components/ui/pills";
 import { LiveTaskTime } from "@/components/tasks/tasks-view";
+import { faPause, faPlay } from "@fortawesome/free-solid-svg-icons";
+import { Icon } from "@/components/ui/icon";
 
 /** Tâches en cours / en revue avec démarrage rapide du timer. */
 export function ActiveTasks({ tasks, renderedAt }: { tasks: TaskRow[]; renderedAt: number }) {
@@ -43,7 +45,7 @@ export function ActiveTasks({ tasks, renderedAt }: { tasks: TaskRow[]; renderedA
               disabled={pending}
               aria-label={running ? "Pause" : "Démarrer"}
             >
-              {running ? "⏸" : "▶"}
+              <Icon icon={running ? faPause : faPlay} />
             </button>
           </li>
         );

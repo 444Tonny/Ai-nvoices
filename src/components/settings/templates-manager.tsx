@@ -9,6 +9,8 @@ import { useFeedback } from "@/components/ui/feedback";
 import { Modal } from "@/components/ui/modal";
 import { EmptyState, Field, Truncate } from "@/components/ui/misc";
 import { BulkBar, RowCheckbox, SelectAllCheckbox, useSelection } from "@/components/ui/selection";
+import { faPen, faPlus, faTrashCan } from "@fortawesome/free-solid-svg-icons";
+import { Icon } from "@/components/ui/icon";
 
 const FIELDS = [
   { key: "company_name", label: "Raison sociale / nom" },
@@ -175,7 +177,7 @@ export function TemplatesManager({ templates, userId }: { templates: InvoiceTemp
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <BulkBar selection={selection} onDelete={remove} noun="profil" disabled={pending || templates.length === 0} />
         <button type="button" className="btn btn-primary" onClick={() => setCreating(true)}>
-          + Nouveau profil
+          <Icon icon={faPlus} /> Nouveau profil
         </button>
       </div>
 
@@ -224,10 +226,10 @@ export function TemplatesManager({ templates, userId }: { templates: InvoiceTemp
                   <td>
                     <div className="flex justify-end gap-2">
                       <button type="button" className="btn btn-icon" title="Modifier" aria-label="Modifier" onClick={() => setEditing(t)}>
-                        ✎
+                        <Icon icon={faPen} />
                       </button>
                       <button type="button" className="btn btn-icon" title="Supprimer" aria-label="Supprimer" onClick={() => removeOne(t)} disabled={pending}>
-                        🗑
+                        <Icon icon={faTrashCan} />
                       </button>
                     </div>
                   </td>

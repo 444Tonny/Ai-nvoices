@@ -9,6 +9,8 @@ import { useFeedback } from "@/components/ui/feedback";
 import { BulkBar, RowCheckbox, SelectAllCheckbox, useSelection } from "@/components/ui/selection";
 import { EmptyState, NameLink, Truncate } from "@/components/ui/misc";
 import { ClientFormModal } from "./client-form";
+import { faPen, faPlus, faTrashCan } from "@fortawesome/free-solid-svg-icons";
+import { Icon } from "@/components/ui/icon";
 
 export function ClientsTable({ clients }: { clients: Client[] }) {
   const { exec, pending } = useAction();
@@ -28,7 +30,7 @@ export function ClientsTable({ clients }: { clients: Client[] }) {
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <BulkBar selection={selection} onDelete={remove} noun="client" disabled={pending || clients.length === 0} />
         <button type="button" className="btn btn-primary" onClick={() => setCreating(true)}>
-          + Nouveau client
+          <Icon icon={faPlus} /> Nouveau client
         </button>
       </div>
 
@@ -38,7 +40,7 @@ export function ClientsTable({ clients }: { clients: Client[] }) {
           hint="Ajoutez votre premier client pour lui rattacher des projets et des factures."
           action={
             <button type="button" className="btn btn-primary" onClick={() => setCreating(true)}>
-              + Nouveau client
+              <Icon icon={faPlus} /> Nouveau client
             </button>
           }
         />
@@ -76,10 +78,10 @@ export function ClientsTable({ clients }: { clients: Client[] }) {
                   <td>
                     <div className="flex justify-end gap-2">
                       <button type="button" className="btn btn-icon" title="Modifier" aria-label="Modifier" onClick={() => setEditing(c)}>
-                        ✎
+                        <Icon icon={faPen} />
                       </button>
                       <button type="button" className="btn btn-icon" title="Supprimer" aria-label="Supprimer" onClick={() => removeOne(c)} disabled={pending}>
-                        🗑
+                        <Icon icon={faTrashCan} />
                       </button>
                     </div>
                   </td>

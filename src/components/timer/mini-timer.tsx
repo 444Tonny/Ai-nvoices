@@ -1,5 +1,7 @@
 "use client";
 
+import { faPause, faPlay, faStop } from "@fortawesome/free-solid-svg-icons";
+import { Icon } from "@/components/ui/icon";
 import { formatHMS } from "@/lib/format";
 import { useTimer } from "./timer-provider";
 
@@ -22,17 +24,17 @@ export function MiniTimer() {
       <div className="flex gap-2">
         {state.status === "running" && (
           <button type="button" className="btn btn-sm btn-warning flex-1" onClick={pause} disabled={pending}>
-            ⏸ Pause
+            <Icon icon={faPause} /> Pause
           </button>
         )}
         {state.status === "paused" && (
           <button type="button" className="btn btn-sm btn-success flex-1" onClick={resume} disabled={pending}>
-            ▶ Reprendre
+            <Icon icon={faPlay} /> Reprendre
           </button>
         )}
         {state.status !== "idle" && (
           <button type="button" className="btn btn-sm btn-danger flex-1" onClick={stop} disabled={pending}>
-            ■ Stop
+            <Icon icon={faStop} /> Stop
           </button>
         )}
       </div>

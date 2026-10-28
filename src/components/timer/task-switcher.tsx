@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Modal } from "@/components/ui/modal";
 import { ColorDot } from "@/components/ui/pills";
 import { useTimer } from "./timer-provider";
+import { faArrowDown, faArrowUp, faPlay } from "@fortawesome/free-solid-svg-icons";
+import { Icon } from "@/components/ui/icon";
 
 /** Palette type ⌘K : les 20 tâches les plus récentes, filtrables au clavier. */
 export function TaskSwitcher() {
@@ -88,14 +90,25 @@ export function TaskSwitcher() {
                       {[t.project_name, t.client_name].filter(Boolean).join(" · ") || "Sans projet"}
                     </span>
                   </span>
-                  {isCurrent ? <span className="badge bg-success/15 text-success">En cours</span> : <span className="text-dim">▶</span>}
+                  {isCurrent ? <span className="badge bg-success/15 text-success">En cours</span> : <Icon icon={faPlay} className="text-dim" />}
                 </button>
               </li>
             );
           })}
         </ul>
       )}
-      <p className="mt-4 text-[12px] text-dim">↑ ↓ pour naviguer · Entrée pour démarrer · Ctrl/⌘ + K pour ouvrir</p>
+      <p className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-dim">
+        <span className="inline-flex items-center gap-1.5">
+          <kbd className="kbd"><Icon icon={faArrowUp} /></kbd>
+          <kbd className="kbd"><Icon icon={faArrowDown} /></kbd> naviguer
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <kbd className="kbd">Entrée</kbd> démarrer
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <kbd className="kbd">Ctrl</kbd>+<kbd className="kbd">K</kbd> ouvrir
+        </span>
+      </p>
     </Modal>
   );
 }

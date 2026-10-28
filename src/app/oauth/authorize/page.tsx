@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { resolveClient } from "@/lib/oauth";
 import { oauthDecisionAction } from "@/actions/oauth";
+import { faEye, faFileInvoiceDollar, faPenToSquare, faStopwatch } from "@fortawesome/free-solid-svg-icons";
+import { Icon } from "@/components/ui/icon";
 
 export const metadata: Metadata = { title: "Autoriser l'accès" };
 export const dynamic = "force-dynamic";
@@ -48,7 +50,9 @@ export default async function AuthorizePage({ searchParams }: { searchParams: Pr
     <main className="flex min-h-screen items-center justify-center px-4 py-12">
       <div className="card w-full max-w-[480px] p-8">
         <div className="mb-6 flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-ui bg-primary text-xl text-on-fill">⏱</span>
+          <span className="flex h-11 w-11 items-center justify-center rounded-ui bg-primary text-xl text-on-fill">
+            <Icon icon={faStopwatch} />
+          </span>
           <div>
             <p className="text-[13px] uppercase tracking-wider text-muted">AI-nvoices</p>
             <h1 className="text-[20px]">Autoriser {appName} ?</h1>
@@ -58,12 +62,21 @@ export default async function AuthorizePage({ searchParams }: { searchParams: Pr
           <strong className="font-semibold">{appName}</strong> demande l&apos;accès à votre compte <span className="text-primary">{user.email}</span>.
         </p>
         <ul className="mb-5 flex flex-col gap-2 rounded-ui border border-border bg-surface-2 px-4 py-3 text-[14px] text-muted">
-          <li>• Lire vos clients, projets, tâches, temps et factures</li>
-          <li>• Créer et modifier des tâches, saisir du temps, piloter le timer</li>
-          <li>• Préparer et compléter des factures</li>
+          <li className="flex items-center gap-2.5">
+            <Icon icon={faEye} className="w-4 text-primary" />
+            Lire vos clients, projets, tâches, temps et factures
+          </li>
+          <li className="flex items-center gap-2.5">
+            <Icon icon={faPenToSquare} className="w-4 text-primary" />
+            Créer et modifier des tâches, saisir du temps, piloter le timer
+          </li>
+          <li className="flex items-center gap-2.5">
+            <Icon icon={faFileInvoiceDollar} className="w-4 text-primary" />
+            Préparer et compléter des factures
+          </li>
         </ul>
         <p className="mb-6 text-[13px] text-dim">
-          Retour vers <span className="text-muted">{host}</span>. Vous pourrez révoquer cet accès à tout moment dans Paramètres › Accès MCP.
+          Retour vers <span className="text-muted">{host}</span>. Vous pourrez révoquer cet accès à tout moment dans Paramètres, rubrique Accès MCP.
         </p>
         <form action={oauthDecisionAction} className="flex gap-3">
           <input type="hidden" name="client_id" value={p.client_id} />

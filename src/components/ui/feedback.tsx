@@ -2,6 +2,8 @@
 
 import { createContext, useCallback, useContext, useRef, useState } from "react";
 import { Modal } from "./modal";
+import { faCircleCheck, faCircleExclamation, faCircleInfo } from "@fortawesome/free-solid-svg-icons";
+import { Icon } from "@/components/ui/icon";
 
 // ---------------------------------------------------------------------------
 // Toasts
@@ -87,7 +89,7 @@ export function FeedbackProvider({ children }: { children: React.ReactNode }) {
           <div
             key={t.id}
             role="status"
-            className={`pointer-events-auto rounded-ui border px-4 py-3 text-sm shadow-lg ${
+            className={`pointer-events-auto flex items-start gap-2.5 rounded-ui border px-4 py-3 text-sm shadow-lg ${
               t.kind === "error"
                 ? "border-danger/50 bg-surface-2 text-text"
                 : t.kind === "success"
@@ -95,8 +97,11 @@ export function FeedbackProvider({ children }: { children: React.ReactNode }) {
                   : "border-border bg-surface-2 text-text"
             }`}
           >
-            <span className={t.kind === "error" ? "text-danger" : t.kind === "success" ? "text-success" : "text-primary"}>●</span>{" "}
-            {t.message}
+            <Icon
+              icon={t.kind === "error" ? faCircleExclamation : t.kind === "success" ? faCircleCheck : faCircleInfo}
+              className={`mt-0.5 ${t.kind === "error" ? "text-danger" : t.kind === "success" ? "text-success" : "text-primary"}`}
+            />
+            <span>{t.message}</span>
           </div>
         ))}
       </div>

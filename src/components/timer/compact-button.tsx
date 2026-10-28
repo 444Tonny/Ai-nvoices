@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { faUpRightAndDownLeftFromCenter } from "@fortawesome/free-solid-svg-icons";
+import { Icon } from "@/components/ui/icon";
 import { MiniTimer } from "./mini-timer";
 
 interface DocumentPictureInPicture {
@@ -39,7 +41,7 @@ function copyStyles(target: Window) {
 }
 
 /**
- * Bouton ⤢ : ouvre un mini-timer toujours au premier plan via la
+ * Bouton « mode compact » : ouvre un mini-timer toujours au premier plan via la
  * Document Picture-in-Picture API, sinon une popup réduite (/mini-timer).
  */
 export function CompactButton() {
@@ -70,7 +72,7 @@ export function CompactButton() {
   return (
     <>
       <button type="button" className="btn btn-icon" onClick={open} title="Mode compact (mini-timer flottant)" aria-label="Mode compact">
-        ⤢
+        <Icon icon={faUpRightAndDownLeftFromCenter} />
       </button>
       {pipWindow && createPortal(<MiniTimer />, pipWindow.document.body)}
     </>

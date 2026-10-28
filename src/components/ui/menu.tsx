@@ -2,6 +2,8 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { faCheck } from "@fortawesome/free-solid-svg-icons";
+import { Icon } from "@/components/ui/icon";
 
 export interface MenuItem<T extends string> {
   value: T;
@@ -102,7 +104,7 @@ export function Menu<T extends string>({
               >
                 {item.color && <span className="h-2.5 w-2.5 shrink-0 rounded-ui" style={{ background: item.color }} aria-hidden />}
                 <span className="min-w-0 flex-1 truncate">{item.label}</span>
-                {item.value === value && <span className="text-primary">✓</span>}
+                {item.value === value && <Icon icon={faCheck} className="text-primary" />}
               </button>
             ))}
           </div>,

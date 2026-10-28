@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFeedback } from "./feedback";
+import { faCheckDouble, faTrashCan } from "@fortawesome/free-solid-svg-icons";
+import { Icon } from "@/components/ui/icon";
 
 /** Sélection multiple sur une liste d'identifiants (purge automatique des ids disparus). */
 export function useSelection(ids: string[]) {
@@ -69,7 +71,7 @@ export function RowCheckbox({ selection, id }: { selection: Selection; id: strin
 }
 
 /**
- * Barre « ☑ TOUT / AUCUN » + « 🗑 SUPPRIMER LA SÉLECTION » avec confirmation
+ * Barre « TOUT / AUCUN » + « SUPPRIMER LA SÉLECTION » avec confirmation
  * indiquant le nombre d'éléments. `children` permet d'ajouter d'autres actions groupées.
  */
 export function BulkBar({
@@ -104,11 +106,11 @@ export function BulkBar({
   return (
     <div className="flex flex-wrap items-center gap-3">
       <button type="button" className="btn btn-sm" onClick={selection.toggleAll} disabled={disabled}>
-        ☑ Tout / aucun
+        <Icon icon={faCheckDouble} /> Tout / aucun
       </button>
       {onDelete && (
         <button type="button" className="btn btn-sm btn-danger" onClick={handleDelete} disabled={disabled || selection.count === 0}>
-          🗑 Supprimer la sélection{selection.count > 0 ? ` (${selection.count})` : ""}
+          <Icon icon={faTrashCan} /> Supprimer la sélection{selection.count > 0 ? ` (${selection.count})` : ""}
         </button>
       )}
       {children}

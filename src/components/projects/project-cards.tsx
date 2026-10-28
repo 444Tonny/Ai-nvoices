@@ -8,6 +8,8 @@ import { formatHoursMinutes } from "@/lib/format";
 import { TASK_STATUS, TASK_STATUSES } from "@/lib/labels";
 import { EmptyState } from "@/components/ui/misc";
 import { ProjectFormModal, type ClientOption } from "./project-form";
+import { faPlus } from "@fortawesome/free-solid-svg-icons";
+import { Icon } from "@/components/ui/icon";
 
 /** Barre de progression empilée : tâches par statut. */
 export function TaskProgress({ counts }: { counts: ProjectSummary["task_counts"] }) {
@@ -26,7 +28,7 @@ export function ProjectCards({ projects, clients, defaultClientId }: { projects:
   const [creating, setCreating] = useState(false);
   const newButton = (
     <button type="button" className="btn btn-primary" onClick={() => setCreating(true)}>
-      + Nouveau projet
+      <Icon icon={faPlus} /> Nouveau projet
     </button>
   );
 

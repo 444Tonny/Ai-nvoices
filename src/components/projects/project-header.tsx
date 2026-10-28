@@ -15,6 +15,9 @@ import { formatMoney, formatRate } from "@/lib/currency";
 import { formatHoursMinutes } from "@/lib/format";
 import { ProjectFormModal, type ClientOption } from "./project-form";
 import { TaskProgress } from "./project-cards";
+import { faFileInvoiceDollar, faPen } from "@fortawesome/free-solid-svg-icons";
+import { Icon } from "@/components/ui/icon";
+import { faClock, faCoins, faHourglassHalf } from "@fortawesome/free-solid-svg-icons";
 
 export function ProjectHeader({
   project,
@@ -66,10 +69,10 @@ export function ProjectHeader({
         </div>
         <div className="flex flex-wrap gap-3">
           <button type="button" className="btn btn-primary" onClick={() => setBilling(true)} disabled={billable.length === 0}>
-            🧾 Facturer {project.unbilled_amount > 0 ? formatMoney(project.unbilled_amount, project.currency) : ""}
+            <Icon icon={faFileInvoiceDollar} /> Facturer {project.unbilled_amount > 0 ? formatMoney(project.unbilled_amount, project.currency) : ""}
           </button>
           <button type="button" className="btn" onClick={() => setEditing(true)}>
-            ✎ Modifier
+            <Icon icon={faPen} /> Modifier
           </button>
           <button
             type="button"
@@ -86,9 +89,9 @@ export function ProjectHeader({
       </div>
 
       <section className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Temps total" value={formatHoursMinutes(project.total_seconds)} />
-        <StatCard label="À facturer" value={formatMoney(project.unbilled_amount, project.currency)} hint={formatHoursMinutes(project.unbilled_seconds)} />
-        <StatCard label="Valeur du temps" value={formatMoney((project.total_seconds / 3600) * project.rate, project.currency)} hint="Temps total × taux" />
+        <StatCard label="Temps total" value={formatHoursMinutes(project.total_seconds)} icon={faClock} />
+        <StatCard label="À facturer" value={formatMoney(project.unbilled_amount, project.currency)} hint={formatHoursMinutes(project.unbilled_seconds)} icon={faHourglassHalf} />
+        <StatCard label="Valeur du temps" value={formatMoney((project.total_seconds / 3600) * project.rate, project.currency)} hint="Temps total × taux" icon={faCoins} />
         <div className="card px-6 py-5">
           <p className="label mb-3">Avancement</p>
           <TaskProgress counts={project.task_counts} />

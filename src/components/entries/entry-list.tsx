@@ -13,6 +13,8 @@ import { useTimer } from "@/components/timer/timer-provider";
 import { entrySeconds, formatDate, formatHMS, formatTime } from "@/lib/format";
 import type { TimeEntryWithTask } from "@/lib/types";
 import { ManualEntryForm, type TaskOption } from "./manual-entry-form";
+import { faEuroSign, faLock, faPen, faPlay, faTrashCan } from "@fortawesome/free-solid-svg-icons";
+import { Icon } from "@/components/ui/icon";
 
 /** Badge de facturation d'une entrée : facture (verrouillée si envoyée/payée) ou non facturée. */
 export function BillingBadge({ entry }: { entry: Pick<TimeEntryWithTask, "invoice" | "billable"> }) {
@@ -24,7 +26,7 @@ export function BillingBadge({ entry }: { entry: Pick<TimeEntryWithTask, "invoic
         className={`badge whitespace-nowrap ${locked ? "bg-success/15 text-success" : "bg-secondary text-text"}`}
         title={locked ? "Facturé (facture envoyée ou payée) : verrouillé" : "Sur une facture non payée"}
       >
-        {locked ? "🔒 " : ""}
+        {locked && <Icon icon={faLock} className="mr-1.5" />}
         {entry.invoice.number}
       </Link>
     );
@@ -135,7 +137,7 @@ export function EntryList({
                         disabled={locked || pending}
                         onClick={() => toggleBillable(e)}
                       >
-                        €
+                        <Icon icon={faEuroSign} />
                       </button>
                       <BillingBadge entry={e} />
                     </div>
@@ -151,14 +153,14 @@ export function EntryList({
                           disabled={state.status === "running" && state.task?.id === e.task.id}
                           onClick={() => start(e.task!.id)}
                         >
-                          ▶
+                          <Icon icon={faPlay} />
                         </button>
                       )}
                       <button type="button" className="btn btn-icon" title={locked ? "Verrouillée (facture envoyée ou payée)" : "Modifier"} aria-label="Modifier" disabled={locked} onClick={() => setEditing(e)}>
-                        ✎
+                        <Icon icon={faPen} />
                       </button>
                       <button type="button" className="btn btn-icon" title={locked ? "Verrouillée" : "Supprimer"} aria-label="Supprimer" onClick={() => removeOne(e.id)} disabled={pending || locked}>
-                        🗑
+                        <Icon icon={faTrashCan} />
                       </button>
                     </div>
                   </td>

@@ -12,11 +12,11 @@ export const TASK_STATUS: Record<TaskStatus, { label: string; color: string }> =
 
 export const TASK_PRIORITIES: TaskPriority[] = ["urgent", "high", "normal", "low"];
 
-export const TASK_PRIORITY: Record<TaskPriority, { label: string; color: string; icon: string }> = {
-  urgent: { label: "Urgente", color: "#EF4B67", icon: "⚑" },
-  high: { label: "Haute", color: "#F5A623", icon: "⚑" },
-  normal: { label: "Normale", color: "#A78BDA", icon: "⚑" },
-  low: { label: "Basse", color: "#6B6B70", icon: "⚑" },
+export const TASK_PRIORITY: Record<TaskPriority, { label: string; color: string }> = {
+  urgent: { label: "Urgente", color: "#EF4B67" },
+  high: { label: "Haute", color: "#F5A623" },
+  normal: { label: "Normale", color: "#A78BDA" },
+  low: { label: "Basse", color: "#6B6B70" },
 };
 
 export const INVOICE_STATUS: Record<InvoiceStatus, { label: string; className: string }> = {

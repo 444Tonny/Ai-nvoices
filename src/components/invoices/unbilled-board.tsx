@@ -11,6 +11,9 @@ import { ColorDot } from "@/components/ui/pills";
 import { useTimer } from "@/components/timer/timer-provider";
 import { formatMoney } from "@/lib/currency";
 import { formatDate, formatHoursMinutes } from "@/lib/format";
+import { faChevronRight } from "@fortawesome/free-solid-svg-icons";
+import { Icon } from "@/components/ui/icon";
+import { faFileCirclePlus } from "@fortawesome/free-solid-svg-icons";
 
 export type PeriodPreset = "all" | "this_month" | "last_month" | "custom";
 
@@ -107,7 +110,7 @@ export function UnbilledBoard({
               <section key={key} className="card overflow-hidden">
                 <div className="flex flex-wrap items-center gap-4 px-6 py-5">
                   <button type="button" className="flex min-w-0 flex-1 items-center gap-3 text-left" onClick={() => setOpen((o) => ({ ...o, [key]: !expanded }))}>
-                    <span className="w-3 text-dim">{expanded ? "▾" : "▸"}</span>
+                    <Icon icon={faChevronRight} className={`w-3 text-dim transition-transform duration-150 ${expanded ? "rotate-90" : ""}`} />
                     <span className="min-w-0">
                       <span className="block truncate text-[18px]">{c.client_name ?? "Sans client"}</span>
                       <span className="block text-[13px] text-muted">
@@ -119,7 +122,7 @@ export function UnbilledBoard({
                   <div className="flex flex-wrap gap-2">
                     {c.client_id ? (
                       <button type="button" className="btn btn-primary" onClick={() => create(c.client_id!)} disabled={pending}>
-                        Créer la facture
+                        <Icon icon={faFileCirclePlus} /> Créer la facture
                       </button>
                     ) : (
                       <span className="text-[13px] text-muted">Rattachez ces projets à un client pour les facturer.</span>

@@ -167,6 +167,8 @@ h1, h2, h3, h4 { font-weight: 600; }
 
   .badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: var(--radius); font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap; }
 
+  .kbd { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 6px; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px; background: var(--surface-2); color: var(--muted); font-family: inherit; font-size: 11px; }
+
   .duration { color: var(--accent); font-variant-numeric: tabular-nums; }
   .tabular { font-variant-numeric: tabular-nums; }
 }

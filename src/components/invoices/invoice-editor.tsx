@@ -17,11 +17,14 @@ import { formatDay, formatHoursMinutes } from "@/lib/format";
 import { lineAmount, parseDecimal } from "@/lib/numbers";
 import { groupByProject } from "@/lib/invoice-groups";
 import { InvoiceFormModal } from "./invoice-form";
+import { faClock, faLock, type IconDefinition } from "@fortawesome/free-solid-svg-icons";
+import { Icon } from "@/components/ui/icon";
+import { faCircleCheck, faFilePdf, faPaperPlane, faPen, faPlus, faRotateLeft, faTrashCan } from "@fortawesome/free-solid-svg-icons";
 
-const STATUS_ACTIONS: { status: InvoiceStatus; label: string; className: string }[] = [
-  { status: "sent", label: "Marquer envoyée", className: "btn-warning" },
-  { status: "paid", label: "Marquer payée", className: "btn-success" },
-  { status: "unpaid", label: "Repasser non payée", className: "" },
+const STATUS_ACTIONS: { status: InvoiceStatus; label: string; className: string; icon: IconDefinition }[] = [
+  { status: "sent", label: "Marquer envoyée", className: "btn-warning", icon: faPaperPlane },
+  { status: "paid", label: "Marquer payée", className: "btn-success", icon: faCircleCheck },
+  { status: "unpaid", label: "Repasser non payée", className: "", icon: faRotateLeft },
 ];
 
 const toInput = (n: number) => String(n).replace(".", ",");
@@ -158,7 +161,7 @@ export function InvoiceEditor({
           </span>
           {item.source === "time" ? (
             <span className="text-[11px] text-muted">
-              ⏱ {item.entry_count} entrée{item.entry_count > 1 ? "s" : ""} de temps{frozen ? " · verrouillée" : ""}
+              <Icon icon={faClock} className="mr-1" /> {item.entry_count} entrée{item.entry_count > 1 ? "s" : ""} de temps{frozen ? " · verrouillée" : ""}
             </span>
           ) : (
             <span className="text-[11px] text-dim">Ligne libre</span>
@@ -171,10 +174,10 @@ export function InvoiceEditor({
         <td>
           <div className="flex justify-end gap-1.5">
             <button type="button" className="btn btn-icon" title="Modifier" aria-label="Modifier" onClick={() => setEditingItem(item)}>
-              ✎
+              <Icon icon={faPen} />
             </button>
             <button type="button" className="btn btn-icon" title="Retirer" aria-label="Retirer" onClick={() => removeOne(item)} disabled={pending}>
-              🗑
+              <Icon icon={faTrashCan} />
             </button>
           </div>
         </td>
@@ -203,25 +206,25 @@ export function InvoiceEditor({
         </div>
         <div className="flex flex-wrap gap-2">
           <a href={`/api/invoices/${invoice.id}/pdf`} target="_blank" rel="noopener" className="btn btn-primary">
-            Générer PDF
+            <Icon icon={faFilePdf} /> Générer PDF
           </a>
           {STATUS_ACTIONS.filter((a) => a.status !== invoice.status).map((a) => (
             <button key={a.status} type="button" className={`btn ${a.className}`} disabled={pending} onClick={() => exec(() => setInvoiceStatusAction([invoice.id], a.status), "Statut mis à jour")}>
-              {a.label}
+              <Icon icon={a.icon} /> {a.label}
             </button>
           ))}
           <button type="button" className="btn" onClick={() => setEditingHeader(true)}>
-            ✎ Modifier
+            <Icon icon={faPen} /> Modifier
           </button>
           <button type="button" className="btn btn-danger" onClick={removeInvoice} disabled={pending}>
-            Supprimer
+            <Icon icon={faTrashCan} /> Supprimer
           </button>
         </div>
       </div>
 
       {frozen && (
         <p className="mb-5 rounded-ui border border-warning/40 bg-warning/10 px-4 py-3 text-[14px] text-warning">
-          🔒 Facture {invoice.status === "paid" ? "payée" : "envoyée"} : le temps qu&apos;elle facture est verrouillé et ses heures ne bougent plus.
+          <Icon icon={faLock} className="mr-2" />Facture {invoice.status === "paid" ? "payée" : "envoyée"} : le temps qu&apos;elle facture est verrouillé et ses heures ne bougent plus.
         </p>
       )}
       {!frozen && unbilled && unbilled.seconds > 0 && (
@@ -230,7 +233,7 @@ export function InvoiceEditor({
             <span className="text-warning">{formatHoursMinutes(unbilled.seconds)}</span> non facturées pour {unbilled.client_name} ({formatMoney(unbilled.amount, unbilled.currency)}).
           </span>
           <button type="button" className="btn btn-sm btn-primary ml-auto" onClick={addUnbilled} disabled={pending}>
-            Ajouter ce temps à la facture
+            <Icon icon={faPlus} /> Ajouter ce temps à la facture
           </button>
         </div>
       )}
@@ -240,7 +243,7 @@ export function InvoiceEditor({
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-[17px]">Lignes</h2>
             <button type="button" className="btn btn-sm" onClick={() => setAddingItem(true)}>
-              + Ligne libre
+              <Icon icon={faPlus} /> Ligne libre
             </button>
           </div>
           {items.length === 0 ? (

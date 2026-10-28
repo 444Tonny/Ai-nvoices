@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { InvoiceStatus } from "@/lib/types";
 import { INVOICE_STATUS } from "@/lib/labels";
+import { faArrowRight, faInbox, type IconDefinition } from "@fortawesome/free-solid-svg-icons";
+import { Icon } from "@/components/ui/icon";
 
 export function PageHeader({
   title,
@@ -25,7 +27,7 @@ export function PageHeader({
 export function EmptyState({ title, hint, action }: { title: string; hint?: string; action?: React.ReactNode }) {
   return (
     <div className="card flex flex-col items-center justify-center gap-3 px-6 py-14 text-center">
-      <div className="text-[28px] text-dim">○</div>
+      <Icon icon={faInbox} className="text-[28px] text-dim" />
       <p className="text-[15px] text-text">{title}</p>
       {hint && <p className="max-w-md text-muted">{hint}</p>}
       {action && <div className="mt-2">{action}</div>}
@@ -58,14 +60,49 @@ export function StatusBadge({ status }: { status: InvoiceStatus }) {
   return <span className={`badge ${s.className}`}>{s.label}</span>;
 }
 
-export function StatCard({ label, value, hint }: { label: string; value: React.ReactNode; hint?: string }) {
-  return (
-    <div className="card px-6 py-5">
-      <p className="label mb-2">{label}</p>
+/** Carte de statistique ; avec `href`, toute la carte est un lien. */
+export function StatCard({
+  label,
+  value,
+  hint,
+  icon,
+  href,
+  hintTone = "dim",
+}: {
+  label: string;
+  value: React.ReactNode;
+  hint?: string;
+  icon?: IconDefinition;
+  href?: string;
+  hintTone?: "dim" | "danger";
+}) {
+  const body = (
+    <>
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <p className="label mb-0">{label}</p>
+        {icon && (
+          <span className="flex h-8 w-8 items-center justify-center rounded-ui bg-secondary/60 text-primary">
+            <Icon icon={icon} />
+          </span>
+        )}
+      </div>
       <p className="duration text-[26px] font-semibold leading-tight">{value}</p>
-      {hint && <p className="mt-1 text-[13px] text-dim">{hint}</p>}
-    </div>
+      {hint && <p className={`mt-1 text-[13px] ${hintTone === "danger" ? "text-danger" : "text-dim"}`}>{hint}</p>}
+      {href && (
+        <span className="mt-3 inline-flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-wider text-primary">
+          Voir <Icon icon={faArrowRight} className="transition-transform duration-150 group-hover:translate-x-0.5" />
+        </span>
+      )}
+    </>
   );
+  if (href) {
+    return (
+      <Link href={href} className="card group block px-6 py-5 transition-colors duration-150 hover:border-primary/60">
+        {body}
+      </Link>
+    );
+  }
+  return <div className="card px-6 py-5">{body}</div>;
 }
 
 export function Field({ label, htmlFor, children, error }: { label: string; htmlFor?: string; children: React.ReactNode; error?: string }) {

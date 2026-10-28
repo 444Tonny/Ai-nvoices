@@ -1,5 +1,7 @@
 "use client";
 
+import { faArrowRightArrowLeft, faPause, faPlay, faStop } from "@fortawesome/free-solid-svg-icons";
+import { Icon } from "@/components/ui/icon";
 import { formatHMS } from "@/lib/format";
 import { ColorDot } from "@/components/ui/pills";
 import { useTimer } from "./timer-provider";
@@ -31,7 +33,7 @@ export function TimerWidget() {
             {state.task?.project_color && <ColorDot color={state.task.project_color} size={7} />}
             {state.task
               ? [state.task.project_name, state.task.client_name].filter(Boolean).join(" · ") || "Sans projet"
-              : "Ctrl/⌘ + K pour démarrer"}
+              : "Ctrl + K pour démarrer"}
           </p>
         </div>
         <span
@@ -44,21 +46,21 @@ export function TimerWidget() {
 
       {running && (
         <button type="button" className="btn btn-sm btn-warning" onClick={pause} disabled={pending}>
-          ⏸ Pause
+          <Icon icon={faPause} /> Pause
         </button>
       )}
       {paused && (
         <button type="button" className="btn btn-sm btn-success" onClick={resume} disabled={pending}>
-          ▶ Reprendre
+          <Icon icon={faPlay} /> Reprendre
         </button>
       )}
       {(running || paused) && (
         <button type="button" className="btn btn-sm btn-danger" onClick={stop} disabled={pending}>
-          ■ Stop
+          <Icon icon={faStop} /> Stop
         </button>
       )}
       <button type="button" className="btn btn-sm" onClick={() => setSwitcherOpen(true)} disabled={pending}>
-        Switch
+        <Icon icon={faArrowRightArrowLeft} /> Switch
       </button>
       <CompactButton />
       <TaskSwitcher />

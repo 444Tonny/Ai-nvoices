@@ -11,6 +11,10 @@
     "db:push": "npx --yes supabase db push"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-svg-core": "^7.3.1",
+    "@fortawesome/free-regular-svg-icons": "^7.3.1",
+    "@fortawesome/free-solid-svg-icons": "^7.3.1",
+    "@fortawesome/react-fontawesome": "^3.5.0",
     "@modelcontextprotocol/sdk": "^1.32.1",
     "@react-pdf/renderer": "^4.9.0",
     "@supabase/ssr": "^0.12.7",

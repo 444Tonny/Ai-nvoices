@@ -8,6 +8,9 @@ import { useFeedback } from "@/components/ui/feedback";
 import { Modal } from "@/components/ui/modal";
 import { formatDateTime } from "@/lib/format";
 import { useTimer } from "@/components/timer/timer-provider";
+import { faKey } from "@fortawesome/free-solid-svg-icons";
+import { Icon } from "@/components/ui/icon";
+import { faBan, faCopy, faTerminal } from "@fortawesome/free-solid-svg-icons";
 
 /** Jetons d'accès personnels pour connecter un agent (Claude) via MCP. */
 export function TokensManager({ tokens, mcpUrl }: { tokens: ApiToken[]; mcpUrl: string }) {
@@ -52,7 +55,7 @@ export function TokensManager({ tokens, mcpUrl }: { tokens: ApiToken[]; mcpUrl: 
       <div className="mb-6 flex flex-wrap gap-3">
         <input className="input max-w-[260px]" value={name} onChange={(e) => setName(e.target.value)} placeholder="Nom du jeton" aria-label="Nom du jeton" />
         <button type="button" className="btn btn-primary" onClick={create} disabled={pending || !name.trim()}>
-          + Créer un jeton
+          <Icon icon={faKey} /> Créer un jeton
         </button>
       </div>
 
@@ -79,7 +82,7 @@ export function TokensManager({ tokens, mcpUrl }: { tokens: ApiToken[]; mcpUrl: 
                   <td className="tabular whitespace-nowrap">{t.last_used_at ? formatDateTime(t.last_used_at, tz) : <span className="text-dim">Jamais</span>}</td>
                   <td className="text-right">
                     <button type="button" className="btn btn-sm btn-danger" onClick={() => revoke(t)} disabled={pending}>
-                      Révoquer
+                      <Icon icon={faBan} /> Révoquer
                     </button>
                   </td>
                 </tr>
@@ -96,14 +99,14 @@ export function TokensManager({ tokens, mcpUrl }: { tokens: ApiToken[]; mcpUrl: 
             <div className="flex gap-2">
               <input className="input tabular" readOnly value={created} onFocus={(e) => e.target.select()} aria-label="Jeton" />
               <button type="button" className="btn" onClick={() => copy(created)}>
-                Copier
+                <Icon icon={faCopy} /> Copier
               </button>
             </div>
             <div>
               <p className="label">Connexion depuis Claude Code</p>
               <pre className="overflow-x-auto whitespace-pre-wrap break-all rounded-ui border border-border bg-surface-2 p-3 text-[12px] text-text">{command(created)}</pre>
               <button type="button" className="btn btn-sm mt-2" onClick={() => copy(command(created))}>
-                Copier la commande
+                <Icon icon={faTerminal} /> Copier la commande
               </button>
             </div>
           </div>

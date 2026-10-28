@@ -9,6 +9,8 @@ import { Modal } from "@/components/ui/modal";
 import { EntryList } from "@/components/entries/entry-list";
 import { ManualEntryForm, type TaskOption } from "@/components/entries/manual-entry-form";
 import { useTimer } from "@/components/timer/timer-provider";
+import { faChevronLeft, faChevronRight, faPlus } from "@fortawesome/free-solid-svg-icons";
+import { Icon } from "@/components/ui/icon";
 
 const WEEKDAYS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
 
@@ -105,13 +107,13 @@ export function CalendarView({
       <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-2">
           <Link href={`/calendar?month=${monthParam(year, month - 1)}`} className="btn btn-sm" aria-label="Mois précédent">
-            ‹ Précédent
+            <Icon icon={faChevronLeft} /> Précédent
           </Link>
           <Link href="/calendar" className="btn btn-sm">
             Aujourd&apos;hui
           </Link>
           <Link href={`/calendar?month=${monthParam(year, month + 1)}`} className="btn btn-sm" aria-label="Mois suivant">
-            Suivant ›
+            Suivant <Icon icon={faChevronRight} />
           </Link>
         </div>
         <div className="flex items-baseline gap-4">
@@ -176,7 +178,7 @@ export function CalendarView({
               </p>
               {!adding && (
                 <button type="button" className="btn btn-primary btn-sm" onClick={() => setAdding(true)}>
-                  + Ajouter une entrée
+                  <Icon icon={faPlus} /> Ajouter une entrée
                 </button>
               )}
             </div>

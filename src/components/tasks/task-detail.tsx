@@ -18,6 +18,8 @@ import { formatHoursMinutes } from "@/lib/format";
 import { LiveTaskTime } from "./tasks-view";
 import { BillTasksModal } from "./bill-tasks-modal";
 import type { ProjectOption } from "./task-form";
+import { faFileInvoiceDollar, faPause, faPlay, faPlus } from "@fortawesome/free-solid-svg-icons";
+import { Icon } from "@/components/ui/icon";
 
 function Property({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -114,13 +116,14 @@ export function TaskDetail({
 
         <div className="mb-8 flex flex-wrap gap-3">
           <button type="button" className={`btn ${running ? "btn-warning" : "btn-success"}`} onClick={() => (running ? pause() : start(t.id))} disabled={timerPending}>
-            {running ? "⏸ Pause" : "▶ Démarrer le timer"}
+            <Icon icon={running ? faPause : faPlay} />
+            {running ? "Pause" : "Démarrer le timer"}
           </button>
           <button type="button" className="btn" onClick={() => setAdding(true)}>
-            + Ajouter du temps
+            <Icon icon={faPlus} /> Ajouter du temps
           </button>
           <button type="button" className="btn" onClick={() => setBilling(true)} disabled={t.unbilled_seconds === 0}>
-            🧾 Facturer {t.unbilled_seconds > 0 ? formatHoursMinutes(t.unbilled_seconds) : ""}
+            <Icon icon={faFileInvoiceDollar} /> Facturer {t.unbilled_seconds > 0 ? formatHoursMinutes(t.unbilled_seconds) : ""}
           </button>
         </div>
 

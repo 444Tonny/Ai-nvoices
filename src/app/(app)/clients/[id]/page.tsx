@@ -10,6 +10,8 @@ import { PageHeader, StatCard, StatusBadge } from "@/components/ui/misc";
 import { BackButton } from "@/components/ui/back-button";
 import { ProjectCards } from "@/components/projects/project-cards";
 import { InvoiceUnbilledButton } from "@/components/invoices/invoice-unbilled-button";
+import { faClock, faEuroSign, faFileInvoiceDollar, faHourglassHalf } from "@fortawesome/free-solid-svg-icons";
+import { Icon } from "@/components/ui/icon";
 
 export default async function ClientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -38,10 +40,10 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
       />
 
       <section className="mb-9 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Temps total" value={formatHoursMinutes(totalSeconds)} hint={`${projects.length} projet${projects.length > 1 ? "s" : ""}`} />
-        <StatCard label="Taux horaire" value={formatRate(client.hourly_rate, client.currency)} hint="Par défaut pour ses projets" />
-        <StatCard label="À facturer" value={formatMoney(unbilled?.amount ?? 0, client.currency)} hint={formatHoursMinutes(unbilled?.seconds ?? 0)} />
-        <StatCard label="En attente de paiement" value={formatMoney(outstanding, client.currency)} hint="Factures non payées et envoyées" />
+        <StatCard label="Temps total" value={formatHoursMinutes(totalSeconds)} hint={`${projects.length} projet${projects.length > 1 ? "s" : ""}`} icon={faClock} />
+        <StatCard label="Taux horaire" value={formatRate(client.hourly_rate, client.currency)} hint="Par défaut pour ses projets" icon={faEuroSign} />
+        <StatCard label="À facturer" value={formatMoney(unbilled?.amount ?? 0, client.currency)} hint={formatHoursMinutes(unbilled?.seconds ?? 0)} icon={faHourglassHalf} />
+        <StatCard label="En attente de paiement" value={formatMoney(outstanding, client.currency)} hint="Factures non payées et envoyées" icon={faFileInvoiceDollar} />
       </section>
 
       {client.address && (

@@ -33,7 +33,7 @@ export default async function CalendarPage({ searchParams }: { searchParams: Pro
 
   return (
     <>
-      <PageHeader title="📅 Calendrier" subtitle="Heures travaillées par jour. Cliquez sur un jour pour voir ou ajouter des entrées." />
+      <PageHeader title="Calendrier" subtitle="Heures travaillées par jour. Cliquez sur un jour pour voir ou ajouter des entrées." />
       <CalendarView year={year} month={month} entries={entries} tasks={tasks} />
     </>
   );

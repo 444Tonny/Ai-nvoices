@@ -16,6 +16,8 @@ import { TASK_STATUS, TASK_STATUSES } from "@/lib/labels";
 import { formatHMS, formatHoursMinutes } from "@/lib/format";
 import { NewTaskModal, type ProjectOption } from "./task-form";
 import { BillTasksModal } from "./bill-tasks-modal";
+import { faChevronDown, faChevronRight, faFileInvoiceDollar, faList, faMagnifyingGlass, faPause, faPlay, faPlus, faTableColumns } from "@fortawesome/free-solid-svg-icons";
+import { Icon } from "@/components/ui/icon";
 
 type View = "list" | "board";
 
@@ -26,7 +28,7 @@ export function LiveTaskTime({ task, renderedAt }: { task: Pick<TaskRow, "total_
   return <span className="duration tabular">{formatHMS(secs)}</span>;
 }
 
-/** Bouton ▶ / ⏸ d'une tâche. */
+/** Bouton lecture / pause d'une tâche. */
 function TimerToggle({ task }: { task: TaskRow }) {
   const { state, start, pause, pending } = useTimer();
   const running = state.status === "running" && state.task?.id === task.id;
@@ -42,7 +44,7 @@ function TimerToggle({ task }: { task: TaskRow }) {
       title={running ? "Mettre en pause" : "Démarrer le timer"}
       aria-label={running ? "Mettre en pause" : "Démarrer le timer"}
     >
-      {running ? "⏸" : "▶"}
+      <Icon icon={running ? faPause : faPlay} />
     </button>
   );
 }
@@ -89,7 +91,7 @@ function QuickAdd({ status, projectId, onCreated }: { status: TaskStatus; projec
   if (!open) {
     return (
       <button type="button" className="w-full rounded-ui px-4 py-3 text-left text-[13px] text-dim transition-colors duration-150 hover:bg-surface-2 hover:text-muted" onClick={() => setOpen(true)}>
-        + Ajouter une tâche
+        <Icon icon={faPlus} /> Ajouter une tâche
       </button>
     );
   }
@@ -161,7 +163,7 @@ function TaskListView({
               className="flex w-full items-center gap-3 border-b border-border bg-surface-2 px-4 py-3 text-left"
               style={{ boxShadow: `inset 3px 0 0 ${TASK_STATUS[status].color}` }}
             >
-              <span className="w-3 text-dim">{collapsed[status] ? "▸" : "▾"}</span>
+              <Icon icon={faChevronRight} className={`w-3 text-dim transition-transform duration-150 ${collapsed[status] ? "" : "rotate-90"}`} />
               <StatusPill status={status} />
               <span className="text-[13px] text-muted">{group.length}</span>
               {secs > 0 && <span className="ml-auto text-[13px] text-muted">{formatHoursMinutes(secs)}</span>}
@@ -440,13 +442,17 @@ export function TasksView({
               role="tab"
               aria-selected={view === v}
               onClick={() => setView(v)}
-              className={`rounded-ui px-4 py-1.5 text-[13px] font-semibold uppercase tracking-wider transition-colors duration-150 ${view === v ? "bg-primary text-on-fill" : "text-muted hover:text-text"}`}
+              className={`inline-flex items-center gap-2 rounded-ui px-4 py-1.5 text-[13px] font-semibold uppercase tracking-wider transition-colors duration-150 ${view === v ? "bg-primary text-on-fill" : "text-muted hover:text-text"}`}
             >
-              {v === "list" ? "☰ Liste" : "▥ Tableau"}
+              <Icon icon={v === "list" ? faList : faTableColumns} />
+              {v === "list" ? "Liste" : "Tableau"}
             </button>
           ))}
         </div>
-        <input className="input max-w-[260px]" placeholder="Rechercher…" value={search} onChange={(e) => setSearch(e.target.value)} aria-label="Rechercher une tâche" />
+        <div className="relative w-full max-w-[260px]">
+          <Icon icon={faMagnifyingGlass} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-dim" />
+          <input className="input pl-10" placeholder="Rechercher…" value={search} onChange={(e) => setSearch(e.target.value)} aria-label="Rechercher une tâche" />
+        </div>
         {showProjectFilter && (
           <select className="select max-w-[240px]" value={projectFilter} onChange={(e) => setProjectFilter(e.target.value)} aria-label="Filtrer par projet">
             <option value="all">Tous les projets</option>
@@ -459,7 +465,7 @@ export function TasksView({
           </select>
         )}
         <button type="button" className="btn btn-primary ml-auto" onClick={() => setCreating(true)}>
-          + Nouvelle tâche
+          <Icon icon={faPlus} /> Nouvelle tâche
         </button>
       </div>
 
@@ -467,13 +473,13 @@ export function TasksView({
         <div className="mb-4 flex flex-wrap items-center gap-3">
           <BulkBar selection={selection} onDelete={remove} noun="tâche" disabled={pending}>
             <Menu<TaskStatus>
-              trigger={<span className={`btn btn-sm ${selection.count === 0 ? "pointer-events-none opacity-50" : ""}`}>Changer le statut ▾</span>}
+              trigger={<span className={`btn btn-sm ${selection.count === 0 ? "pointer-events-none opacity-50" : ""}`}>Changer le statut <Icon icon={faChevronDown} /></span>}
               items={TASK_STATUSES.map((s) => ({ value: s, label: TASK_STATUS[s].label, color: TASK_STATUS[s].color }))}
               onSelect={bulkStatus}
               disabled={selection.count === 0}
             />
             <button type="button" className="btn btn-sm" disabled={selection.count === 0} onClick={() => setBilling(tasks.filter((t) => selection.has(t.id)))}>
-              🧾 Facturer la sélection
+              <Icon icon={faFileInvoiceDollar} /> Facturer la sélection
             </button>
           </BulkBar>
           <span className="ml-auto flex items-center gap-2 text-[13px] text-muted">
@@ -488,7 +494,7 @@ export function TasksView({
           hint="Créez une tâche, puis lancez le timer pour suivre votre temps."
           action={
             <button type="button" className="btn btn-primary" onClick={() => setCreating(true)}>
-              + Nouvelle tâche
+              <Icon icon={faPlus} /> Nouvelle tâche
             </button>
           }
         />

@@ -3,18 +3,33 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import {
+  faBars,
+  faBriefcase,
+  faCalendarDays,
+  faClock,
+  faFileInvoiceDollar,
+  faGear,
+  faHouse,
+  faListCheck,
+  faRightFromBracket,
+  faStopwatch,
+  faUsers,
+  type IconDefinition,
+} from "@fortawesome/free-solid-svg-icons";
 import { signOut } from "@/actions/auth";
 import { TodayTotal } from "@/components/timer/timer-widget";
+import { Icon } from "@/components/ui/icon";
 
-const NAV = [
-  { href: "/", label: "Accueil", icon: "◧" },
-  { href: "/time", label: "Suivi du temps", icon: "⏱" },
-  { href: "/tasks", label: "Tâches", icon: "☰" },
-  { href: "/projects", label: "Projets", icon: "▤" },
-  { href: "/calendar", label: "Calendrier", icon: "📅" },
-  { href: "/clients", label: "Clients", icon: "◉" },
-  { href: "/invoices", label: "Facturation", icon: "🧾" },
-  { href: "/settings", label: "Paramètres", icon: "⚙" },
+const NAV: { href: string; label: string; icon: IconDefinition }[] = [
+  { href: "/", label: "Accueil", icon: faHouse },
+  { href: "/time", label: "Suivi du temps", icon: faClock },
+  { href: "/tasks", label: "Tâches", icon: faListCheck },
+  { href: "/projects", label: "Projets", icon: faBriefcase },
+  { href: "/calendar", label: "Calendrier", icon: faCalendarDays },
+  { href: "/clients", label: "Clients", icon: faUsers },
+  { href: "/invoices", label: "Facturation", icon: faFileInvoiceDollar },
+  { href: "/settings", label: "Paramètres", icon: faGear },
 ];
 
 function isActive(pathname: string, href: string) {
@@ -34,8 +49,9 @@ export function Sidebar({ email }: { email: string }) {
         className="btn btn-icon fixed left-4 top-4 z-40 lg:hidden"
         onClick={() => setOpen((o) => !o)}
         aria-label="Menu"
+        aria-expanded={open}
       >
-        ☰
+        <Icon icon={faBars} />
       </button>
       {open && <div className="fixed inset-0 z-30 bg-black/50 lg:hidden" onClick={() => setOpen(false)} />}
       <aside
@@ -44,7 +60,9 @@ export function Sidebar({ email }: { email: string }) {
         }`}
       >
         <Link href="/" className="flex items-center gap-3 px-2">
-          <span className="flex h-9 w-9 items-center justify-center rounded-ui bg-primary text-on-fill">⏱</span>
+          <span className="flex h-9 w-9 items-center justify-center rounded-ui bg-primary text-on-fill">
+            <Icon icon={faStopwatch} />
+          </span>
           <span className="text-[18px] font-semibold">AI-nvoices</span>
         </Link>
 
@@ -55,13 +73,12 @@ export function Sidebar({ email }: { email: string }) {
               <Link
                 key={item.href}
                 href={item.href}
+                aria-current={active ? "page" : undefined}
                 className={`flex items-center gap-3 rounded-ui px-3 py-2.5 text-[14px] transition-colors duration-150 ${
                   active ? "bg-secondary text-text" : "text-muted hover:bg-surface-2 hover:text-text"
                 }`}
               >
-                <span className="w-5 text-center" aria-hidden>
-                  {item.icon}
-                </span>
+                <Icon icon={item.icon} className={`w-4 ${active ? "text-primary" : ""}`} />
                 {item.label}
               </Link>
             );
@@ -76,7 +93,7 @@ export function Sidebar({ email }: { email: string }) {
             </p>
             <form action={signOut}>
               <button type="submit" className="btn btn-sm w-full">
-                Déconnexion
+                <Icon icon={faRightFromBracket} /> Déconnexion
               </button>
             </form>
           </div>

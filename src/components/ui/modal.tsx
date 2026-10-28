@@ -2,6 +2,8 @@
 
 import { useEffect, useId, useRef } from "react";
 import { createPortal } from "react-dom";
+import { faXmark } from "@fortawesome/free-solid-svg-icons";
+import { Icon } from "@/components/ui/icon";
 
 interface ModalProps {
   open: boolean;
@@ -67,7 +69,7 @@ export function Modal({ open, onClose, title, children, footer, width = 560 }: M
         <div className="flex shrink-0 items-center justify-between gap-4 border-b border-border px-6 py-4">
           <h2 className="truncate text-[18px]">{title}</h2>
           <button type="button" onClick={onClose} className="btn btn-icon" aria-label="Fermer">
-            ✕
+            <Icon icon={faXmark} />
           </button>
         </div>
         <div className="min-h-0 flex-1 overflow-auto px-6 py-5">{children}</div>

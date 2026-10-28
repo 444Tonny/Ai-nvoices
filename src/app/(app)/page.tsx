@@ -11,6 +11,8 @@ import { formatMoney } from "@/lib/currency";
 import { PageHeader, StatCard } from "@/components/ui/misc";
 import { BarList } from "@/components/dashboard/bar-list";
 import { ActiveTasks } from "@/components/dashboard/active-tasks";
+import { faArrowRight, faCalendarWeek, faClock, faFileInvoiceDollar, faHourglassHalf } from "@fortawesome/free-solid-svg-icons";
+import { Icon } from "@/components/ui/icon";
 
 const RANGES: { id: StatsRange; label: string }[] = [
   { id: "today", label: "Aujourd'hui" },
@@ -47,26 +49,31 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       <PageHeader title="Accueil" subtitle="Votre temps, vos tâches en cours et ce qu'il reste à facturer." />
 
       <section className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Aujourd'hui" value={formatHoursMinutes(stats.today)} />
-        <StatCard label="Cette semaine" value={formatHoursMinutes(stats.week)} hint="Du lundi au dimanche" />
-        <Link href="/invoices?tab=unbilled" className="block transition-opacity duration-150 hover:opacity-90">
-          <StatCard label="À facturer" value={sumByCurrency(unbilled)} hint={`${formatHoursMinutes(unbilled.reduce((s, c) => s + c.seconds, 0))} de temps non facturé`} />
-        </Link>
-        <Link href="/invoices?tab=invoices" className="block transition-opacity duration-150 hover:opacity-90">
-          <StatCard
-            label="En attente de paiement"
-            value={sumByCurrency(unpaid.map((i) => ({ currency: i.currency, amount: i.total })))}
-            hint={overdue.length > 0 ? `${overdue.length} facture${overdue.length > 1 ? "s" : ""} en retard` : `${unpaid.length} facture${unpaid.length > 1 ? "s" : ""}`}
-          />
-        </Link>
+        <StatCard label="Aujourd'hui" value={formatHoursMinutes(stats.today)} icon={faClock} />
+        <StatCard label="Cette semaine" value={formatHoursMinutes(stats.week)} hint="Du lundi au dimanche" icon={faCalendarWeek} />
+        <StatCard
+          label="À facturer"
+          value={sumByCurrency(unbilled)}
+          hint={`${formatHoursMinutes(unbilled.reduce((s, c) => s + c.seconds, 0))} de temps non facturé`}
+          icon={faHourglassHalf}
+          href="/invoices?tab=unbilled"
+        />
+        <StatCard
+          label="En attente de paiement"
+          value={sumByCurrency(unpaid.map((i) => ({ currency: i.currency, amount: i.total })))}
+          hint={overdue.length > 0 ? `${overdue.length} facture${overdue.length > 1 ? "s" : ""} en retard` : `${unpaid.length} facture${unpaid.length > 1 ? "s" : ""}`}
+          hintTone={overdue.length > 0 ? "danger" : "dim"}
+          icon={faFileInvoiceDollar}
+          href="/invoices?tab=invoices"
+        />
       </section>
 
       <section className="mb-8 grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <div className="card px-6 py-5">
           <div className="mb-4 flex items-baseline justify-between">
             <h2 className="text-[17px]">Tâches en cours</h2>
-            <Link href="/tasks" className="link text-[13px]">
-              Toutes les tâches
+            <Link href="/tasks" className="link inline-flex items-center gap-1.5 text-[13px]">
+              Toutes les tâches <Icon icon={faArrowRight} />
             </Link>
           </div>
           <ActiveTasks tasks={active} renderedAt={renderedAt} />
@@ -74,8 +81,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         <div className="card px-6 py-5">
           <div className="mb-4 flex items-baseline justify-between">
             <h2 className="text-[17px]">À facturer par client</h2>
-            <Link href="/invoices?tab=unbilled" className="link text-[13px]">
-              Facturer
+            <Link href="/invoices?tab=unbilled" className="link inline-flex items-center gap-1.5 text-[13px]">
+              Facturer <Icon icon={faArrowRight} />
             </Link>
           </div>
           {unbilled.length === 0 ? (
