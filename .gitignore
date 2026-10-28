@@ -39,3 +39,6 @@ next-env.d.ts
 
 # Donn√©es personnelles locales (exports, sauvegardes) : ne jamais committer
 /tonny/
+
+# Supabase CLI (Ètat local)
+supabase/.temp/
