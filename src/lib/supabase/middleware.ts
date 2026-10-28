@@ -3,7 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 // /api/mcp et OAuth gèrent leur propre authentification (jetons, PKCE).
-const PUBLIC_PATHS = ["/login", "/auth", "/api/mcp", "/api/oauth", "/.well-known"];
+const PUBLIC_PATHS = ["/login", "/auth", "/api/mcp", "/api/oauth", "/api/integrations", "/.well-known"];
 
 /** Chemin interne sûr pour revenir après connexion. */
 function safeNext(value: string | null): string | null {

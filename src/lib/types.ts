@@ -57,6 +57,10 @@ export interface Task {
   due_date: string | null;
   estimate_minutes: number | null;
   position: number;
+  /** Origine externe (ex. « trello ») et lien vers l'élément source. */
+  external_source: string | null;
+  external_id: string | null;
+  external_url: string | null;
 }
 
 /** Tâche enrichie : projet, client, temps total, temps à facturer. */

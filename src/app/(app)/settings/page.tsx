@@ -4,9 +4,12 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ensureDefaultTemplate, listTemplates } from "@/lib/domain/templates";
 import { listTokens } from "@/lib/domain/tokens";
+import { listProjects } from "@/lib/domain/projects";
+import { getTrelloConnection } from "@/lib/domain/trello";
 import { PageHeader } from "@/components/ui/misc";
 import { TemplatesManager } from "@/components/settings/templates-manager";
 import { TokensManager } from "@/components/settings/tokens-manager";
+import { TrelloManager } from "@/components/settings/trello-manager";
 
 export const metadata: Metadata = { title: "Paramètres" };
 
@@ -21,16 +24,19 @@ export default async function SettingsPage() {
     await ensureDefaultTemplate(supabase);
     templates = await listTemplates(supabase);
   }
-  const tokens = await listTokens(supabase);
+  const [tokens, trello, projects] = await Promise.all([listTokens(supabase), getTrelloConnection(supabase), listProjects(supabase)]);
   const h = await headers();
   const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
   const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
 
   return (
     <>
-      <PageHeader title="Paramètres" subtitle="Profils émetteur des factures et accès des agents (MCP)." />
+      <PageHeader title="Paramètres" subtitle="Profils émetteur des factures, intégration Trello et accès des agents (MCP)." />
       <h2 className="mb-4 text-[20px]">Profils émetteur</h2>
       <TemplatesManager templates={templates} userId={user.id} />
+      <div className="mt-10">
+        <TrelloManager connection={trello} projects={projects.map((p) => ({ id: p.id, name: p.name }))} />
+      </div>
       <div className="mt-10">
         <TokensManager tokens={tokens} mcpUrl={`${proto}://${host}/api/mcp`} />
       </div>

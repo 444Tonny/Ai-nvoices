@@ -19,6 +19,7 @@ import { LiveTaskTime } from "./tasks-view";
 import { BillTasksModal } from "./bill-tasks-modal";
 import type { ProjectOption } from "./task-form";
 import { faFileInvoiceDollar, faPause, faPlay, faPlus } from "@fortawesome/free-solid-svg-icons";
+import { faTrello } from "@fortawesome/free-brands-svg-icons";
 import { Icon } from "@/components/ui/icon";
 
 function Property({ label, children }: { label: string; children: React.ReactNode }) {
@@ -103,6 +104,11 @@ export function TaskDetail({
                 {t.client.name}
               </Link>
             </>
+          )}
+          {t.external_url && (
+            <a href={t.external_url} target="_blank" rel="noopener noreferrer" className="ml-auto inline-flex items-center gap-1.5 hover:text-text" title="Ouvrir la carte d'origine">
+              <Icon icon={faTrello} className="text-[#0C66E4]" /> Ouvrir dans Trello
+            </a>
           )}
         </div>
         <input
